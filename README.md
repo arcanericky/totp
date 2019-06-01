@@ -3,7 +3,7 @@
 It's a time-based one-time password (TOTP) code generator.
 
 [![Build Status](https://travis-ci.com/arcanericky/totp.svg?branch=master)](https://travis-ci.com/arcanericky/totp)
-[![codecov](https://codecov.io/gh/arcanericky/totpd/branch/master/graph/badge.svg)](https://codecov.io/gh/arcanericky/totp)
+[![codecov](https://codecov.io/gh/arcanericky/totp/branch/master/graph/badge.svg)](https://codecov.io/gh/arcanericky/totp)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
 ## What it Does
