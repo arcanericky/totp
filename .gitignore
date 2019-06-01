@@ -1,0 +1,4 @@
+.vscode
+bin
+coverage.*
+settings.json
