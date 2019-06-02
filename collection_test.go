@@ -29,7 +29,7 @@ func TestWriteProtected(t *testing.T) {
 
 	key, err := s.UpdateKey(name, seed)
 	if err != nil {
-		t.Error("screwed")
+		t.Error("Failed to add key for test")
 	}
 
 	key.Name = updatedValue

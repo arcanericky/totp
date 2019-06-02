@@ -39,7 +39,7 @@ func TestConfigUpdate(t *testing.T) {
 	}
 
 	// Test using seed named 'config'
-	keyName = configName
+	keyName = configCmd.Use
 	configUpdateCmd.Run(nil, []string{keyName, "seed"})
 	c, err = totp.NewCollectionWithFile(defaultCollectionFile)
 	if err != nil {
@@ -48,7 +48,7 @@ func TestConfigUpdate(t *testing.T) {
 
 	key, err = c.GetKey(keyName)
 	if err == nil {
-		t.Error("Key named \"" + configName + "\" should not have been saved")
+		t.Error("Key named \"" + configCmd.Use + "\" should not have been saved")
 	}
 
 	// No parameters passed
