@@ -28,15 +28,15 @@ func TestConfigRename(t *testing.T) {
 	}
 
 	// Test rename to config
-	configRenameCmd.Run(nil, []string{newName, configName})
+	configRenameCmd.Run(nil, []string{newName, configCmd.Use})
 	c, err = totp.NewCollectionWithFile(defaultCollectionFile)
 	if err != nil {
 		t.Error("Could not load collection for rename test from file")
 	}
 
-	_, err = c.GetKey(configName)
+	_, err = c.GetKey(configCmd.Use)
 	if err == nil {
-		t.Error("Key should not have been renamed to \"" + configName + "\"")
+		t.Error("Key should not have been renamed to \"" + configCmd.Use + "\"")
 	}
 
 	// No collections file

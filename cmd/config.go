@@ -4,10 +4,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const configName = "config"
-
 var configCmd = &cobra.Command{
-	Use:   configName,
+	Use:   "config",
 	Short: "Configure totp",
 	Long:  `Configure totp`,
 }

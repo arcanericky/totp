@@ -7,7 +7,7 @@ import (
 )
 
 var defaultCollectionFile string
-var reservedCommands = []string{"config", "version"}
+var reservedCommands = []string{configCmd.Use, versionCmd.Use}
 
 func isReservedCommand(name string) bool {
 	for _, c := range reservedCommands {

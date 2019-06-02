@@ -19,14 +19,9 @@ type Entry struct {
 	Seed         string
 }
 
-// Entries is a struct that contains an array of Entry's
-// type Entries struct {
-// 	Seeds []Entry
-// }
-
 // Collection is a struct that holds settings data
 type Collection struct {
-	seeds    []Entry
+	seeds    map[string]Entry
 	filename string
 }
 
@@ -39,17 +34,6 @@ type SettingsInterface interface {
 	GetKeys() []Entry
 	SetFilename(string) string
 	UpdateKey(string, string) (Entry, error)
-}
-
-func (c *Collection) findKey(name string) *Entry {
-	var retKey *Entry
-	for i := 0; i < len(c.seeds); i++ {
-		if c.seeds[i].Name == name {
-			retKey = &c.seeds[i]
-		}
-	}
-
-	return retKey
 }
 
 // Save serializes (marshals) the entire TotpSettings struct and writes it to
@@ -71,20 +55,14 @@ func (c *Collection) Save() error {
 
 // DeleteKey deletes an Entry by name
 func (c *Collection) DeleteKey(name string) (Entry, error) {
-	var retKey Entry
-
-	for i := 0; i < len(c.seeds); i++ {
-		if c.seeds[i].Name == name {
-			retKey = c.seeds[i]
-			c.seeds[i] = c.seeds[len(c.seeds)-1]
-			c.seeds[len(c.seeds)-1] = Entry{}
-			c.seeds = c.seeds[:len(c.seeds)-1]
-		}
-	}
-
 	var err error
-	if retKey.Name != name {
-		err = errors.New("Key not found")
+
+	retKey, ok := c.seeds[name]
+
+	if ok == true {
+		delete(c.seeds, name)
+	} else {
+		err = errors.New("Entry does not exist")
 	}
 
 	return retKey, err
@@ -93,7 +71,7 @@ func (c *Collection) DeleteKey(name string) (Entry, error) {
 // UpdateKey updates (if it exists) or adds a new Entry with the
 // name and seed given
 func (c *Collection) UpdateKey(name, seed string) (Entry, error) {
-	var retKey *Entry
+	var retKey Entry
 	var err error
 
 	if len(name) == 0 {
@@ -103,36 +81,36 @@ func (c *Collection) UpdateKey(name, seed string) (Entry, error) {
 	} else {
 		_, err = totp.GenerateCode(seed, time.Now())
 		if err == nil {
-			retKey = c.findKey(name)
-			if retKey != nil {
+			retKey, ok := c.seeds[name]
+			if ok == true {
 				retKey.Seed = seed
 				retKey.DateModified = time.Now()
+				c.seeds[name] = retKey
 			} else {
 				dateAdded := time.Now()
 				newKey := Entry{Name: name, Seed: seed, DateAdded: dateAdded, DateModified: dateAdded}
-				c.seeds = append(c.seeds, newKey)
-				retKey = &newKey
+				c.seeds[name] = newKey
+				retKey = newKey
 			}
 		}
 	}
 
-	if retKey == nil {
-		retKey = new(Entry)
-	}
-
-	return *retKey, err
+	return retKey, err
 }
 
 // RenameKey renames a key
 func (c *Collection) RenameKey(oldName, newName string) (Entry, error) {
-	var retKey *Entry
+	var retKey Entry
+	var ok bool
 	var err error
 
 	if len(newName) != 0 {
-		retKey = c.findKey(oldName)
-		if retKey != nil {
+		retKey, ok = c.seeds[oldName]
+		if ok == true {
 			retKey.Name = newName
 			retKey.DateModified = time.Now()
+			c.seeds[newName] = retKey
+			delete(c.seeds, oldName)
 		} else {
 			err = errors.New("Key not found")
 		}
@@ -140,32 +118,29 @@ func (c *Collection) RenameKey(oldName, newName string) (Entry, error) {
 		err = errors.New("Key name must not be empty")
 	}
 
-	if retKey == nil {
-		retKey = new(Entry)
-	}
-
-	return *retKey, err
+	return retKey, err
 }
 
 // GetKey returns an Entry with the name argument
 func (c *Collection) GetKey(name string) (Entry, error) {
 	var err error
 
-	retKey := c.findKey(name)
-
-	if retKey == nil {
-		retKey = new(Entry)
+	retKey, ok := c.seeds[name]
+	if ok == false {
 		err = fmt.Errorf("Key name \"%s\" not found", name)
 	}
 
-	return *retKey, err
+	return retKey, err
 }
 
 // GetKeys returns a slice containing all the keys
 func (c *Collection) GetKeys() []Entry {
-	seeds := make([]Entry, len(c.seeds))
-	copy(seeds, c.seeds)
-	return seeds
+	keys := []Entry{}
+	for _, key := range c.seeds {
+		keys = append(keys, key)
+	}
+
+	return keys
 }
 
 // GenerateCodeWithTime creates a TOTP code with the named entry's seed
@@ -204,7 +179,9 @@ func (c *Collection) SetFilename(filename string) string {
 
 // NewCollection creates a new, blank Collection instance
 func NewCollection() *Collection {
-	return new(Collection)
+	c := new(Collection)
+	c.seeds = make(map[string]Entry)
+	return c
 }
 
 // NewCollectionWithData creates a new Collection instance with data from a byte slice
