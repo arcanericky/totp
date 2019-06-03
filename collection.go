@@ -78,6 +78,7 @@ func (c *Collection) DeleteSecret(name string) (Secret, error) {
 func (c *Collection) UpdateSecret(name, value string) (Secret, error) {
 	var retSecret Secret
 	var err error
+	var ok bool
 
 	if len(name) == 0 {
 		err = errSecretNameEmpty
@@ -86,7 +87,7 @@ func (c *Collection) UpdateSecret(name, value string) (Secret, error) {
 	} else {
 		_, err = totp.GenerateCode(value, time.Now())
 		if err == nil {
-			retSecret, ok := c.Secrets[name]
+			retSecret, ok = c.Secrets[name]
 			if ok == true {
 				retSecret.Value = value
 				retSecret.DateModified = time.Now()

@@ -135,6 +135,10 @@ func TestSettingsNew(t *testing.T) {
 	if err != nil {
 		t.Error("Error updating secret", secret, err)
 	}
+	if secret.DateAdded == secret.DateModified {
+		t.Error("Date modified not updated on secret update")
+	}
+
 	secret, err = c.GetSecret(testSecret)
 	if err != nil || secret.Value != newSecret {
 		t.Error("Failed to update secret")
