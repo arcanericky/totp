@@ -11,10 +11,10 @@ import (
 
 var configListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List keys",
-	Long:  `List keys`,
+	Short: "List secrets",
+	Long:  `List secrets`,
 	Run: func(cmd *cobra.Command, args []string) {
-		listKeys(cmd)
+		listSecrets(cmd)
 	},
 }
 
@@ -29,29 +29,29 @@ func titleLine(len int) string {
 	return builder.String()
 }
 
-func listKeyNames(keys []totp.Entry) {
-	for _, k := range keys {
-		fmt.Println(k.Name)
+func listSecretNames(secrets []totp.Secret) {
+	for _, s := range secrets {
+		fmt.Println(s.Name)
 	}
 }
 
-func listAllInfo(keys []totp.Entry) {
+func listAllInfo(secrets []totp.Secret) {
 	nameTitle := "Name"
-	seedTitle := "Seed"
+	secretTitle := "Secret"
 	addedDateTitle := "Date Added"
 	modifiedDateTitle := "Date Modified"
 
 	maxNameLen := len(nameTitle)
-	maxSeedLen := len(seedTitle)
-	for _, k := range keys {
-		nameLen := len(k.Name)
+	maxSecretLen := len(secretTitle)
+	for _, s := range secrets {
+		nameLen := len(s.Name)
 		if nameLen > maxNameLen {
 			maxNameLen = nameLen
 		}
 
-		seedLen := len(k.Seed)
-		if seedLen > maxSeedLen {
-			maxSeedLen = seedLen
+		secretLen := len(s.Value)
+		if secretLen > maxSecretLen {
+			maxSecretLen = secretLen
 		}
 	}
 
@@ -60,37 +60,37 @@ func listAllInfo(keys []totp.Entry) {
 	timeFormatLine := titleLine(len(timeFormat))
 	fmt.Printf("%-*s %-*s %-*s %-*s\n",
 		maxNameLen, nameTitle,
-		maxSeedLen, seedTitle,
+		maxSecretLen, secretTitle,
 		timeFormatLen, addedDateTitle,
 		timeFormatLen, modifiedDateTitle)
-	fmt.Printf("%s %s %s %s\n", titleLine(maxNameLen), titleLine(maxSeedLen), timeFormatLine, timeFormatLine)
-	for _, k := range keys {
-		fmt.Printf("%-*s %-*s %s %s\n", maxNameLen, k.Name, maxSeedLen, k.Seed, k.DateAdded.Format(timeFormat), k.DateModified.Format(timeFormat))
+	fmt.Printf("%s %s %s %s\n", titleLine(maxNameLen), titleLine(maxSecretLen), timeFormatLine, timeFormatLine)
+	for _, s := range secrets {
+		fmt.Printf("%-*s %-*s %s %s\n", maxNameLen, s.Name, maxSecretLen, s.Value, s.DateAdded.Format(timeFormat), s.DateModified.Format(timeFormat))
 	}
 }
 
-func listKeys(cmd *cobra.Command) {
+func listSecrets(cmd *cobra.Command) {
 	c, err := totp.NewCollectionWithFile(defaultCollectionFile)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error loading settings", err)
+		fmt.Fprintln(os.Stderr, "Error loading collection", err)
 	} else {
 		names, err := cmd.Flags().GetBool("names")
 		if err != nil {
-			fmt.Println("Error getting names option", err)
+			fmt.Fprintln(os.Stderr, "Error getting names option", err)
 			return
 		}
 
-		keys := c.GetKeys()
+		secrets := c.GetSecrets()
 
 		if names == true {
-			listKeyNames(keys)
+			listSecretNames(secrets)
 		} else {
-			listAllInfo(keys)
+			listAllInfo(secrets)
 		}
 	}
 }
 
 func init() {
 	configCmd.AddCommand(configListCmd)
-	configListCmd.Flags().BoolP("names", "n", false, "list only seed names")
+	configListCmd.Flags().BoolP("names", "n", false, "list only secret names")
 }

@@ -10,27 +10,27 @@ import (
 func TestConfigDelete(t *testing.T) {
 	defaultCollectionFile = "testcollection"
 
-	seedList := createTestData(t)
+	secretList := createTestData(t)
 
-	// Key does not exit
-	configDeleteCmd.Run(nil, []string{"key"})
+	// Secret does not exit
+	configDeleteCmd.Run(nil, []string{"secret"})
 
-	// No key provided
+	// No secret provided
 	configDeleteCmd.Run(nil, []string{})
 
 	// Successful delete
-	configDeleteCmd.Run(nil, []string{seedList[3].name})
+	configDeleteCmd.Run(nil, []string{secretList[3].name})
 	c, err := totp.NewCollectionWithFile(defaultCollectionFile)
 	if err != nil {
 		t.Error("Could not load collection for delete test from file")
 	}
 
-	_, err = c.GetKey(seedList[3].name)
+	_, err = c.GetSecret(secretList[3].name)
 	if err == nil {
-		t.Error("Key not deleted")
+		t.Error("Secret not deleted")
 	}
 
 	// No collections file
 	os.Remove(defaultCollectionFile)
-	deleteKey(seedList[3].name)
+	deleteSecret(secretList[3].name)
 }

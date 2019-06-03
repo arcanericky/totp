@@ -6,34 +6,34 @@ import (
 	"github.com/arcanericky/totp"
 )
 
-type seedItem struct {
-	name string
-	seed string
+type secretItem struct {
+	name  string
+	value string
 }
 
-func createTestData(t *testing.T) []seedItem {
+func createTestData(t *testing.T) []secretItem {
 	t.Helper()
 
 	// Create test data
 	c, _ := totp.NewCollectionWithFile(defaultCollectionFile)
 
 	// Create some test data
-	seedList := []seedItem{
-		{name: "name0", seed: "seed"},
-		{name: "name1", seed: "seed"},
-		{name: "name2", seed: "seedseed"},
-		{name: "name3", seed: "seed"},
-		{name: "name4", seed: "seed"},
+	secretList := []secretItem{
+		{name: "name0", value: "seed"},
+		{name: "name1", value: "seed"},
+		{name: "name2", value: "seedseed"},
+		{name: "name3", value: "seed"},
+		{name: "name4", value: "seed"},
 	}
 
-	for _, i := range seedList {
-		_, err := c.UpdateKey(i.name, i.seed)
+	for _, i := range secretList {
+		_, err := c.UpdateSecret(i.name, i.value)
 		if err != nil {
-			t.Error("Error updating key:", err)
+			t.Errorf("Error adding secret %s for test data: %s", i, err)
 		}
 	}
 
 	c.Save()
 
-	return seedList
+	return secretList
 }

@@ -13,51 +13,51 @@ func TestConfigUpdate(t *testing.T) {
 	createTestData(t)
 
 	// Valid parameters
-	keyName := "testkey"
-	configUpdateCmd.Run(nil, []string{keyName, "seed"})
+	secretName := "testsecret"
+	configUpdateCmd.Run(nil, []string{secretName, "seed"})
 	c, err := totp.NewCollectionWithFile(defaultCollectionFile)
 	if err != nil {
 		t.Error("Could not load collection for update test from file")
 	}
 
-	_, err = c.GetKey(keyName)
+	_, err = c.GetSecret(secretName)
 	if err != nil {
-		t.Error("Key not added")
+		t.Error("Secret not added")
 	}
 
-	// Test update seed
-	newSeed := "seedseed"
-	configUpdateCmd.Run(nil, []string{keyName, newSeed})
+	// Test update secret
+	newSecret := "seedseed"
+	configUpdateCmd.Run(nil, []string{secretName, newSecret})
 	c, err = totp.NewCollectionWithFile(defaultCollectionFile)
 	if err != nil {
 		t.Error("Could not load collection for update test from file")
 	}
 
-	key, err := c.GetKey(keyName)
-	if err != nil || key.Seed != newSeed {
-		t.Error("Key not updated", key)
+	secret, err := c.GetSecret(secretName)
+	if err != nil || secret.Value != newSecret {
+		t.Error("Secret not updated", secret)
 	}
 
-	// Test using seed named 'config'
-	keyName = configCmd.Use
-	configUpdateCmd.Run(nil, []string{keyName, "seed"})
+	// Test using secret named 'config'
+	secretName = configCmd.Use
+	configUpdateCmd.Run(nil, []string{secretName, "seed"})
 	c, err = totp.NewCollectionWithFile(defaultCollectionFile)
 	if err != nil {
 		t.Error("Could not load collection for update test from file")
 	}
 
-	key, err = c.GetKey(keyName)
+	secret, err = c.GetSecret(secretName)
 	if err == nil {
-		t.Error("Key named \"" + configCmd.Use + "\" should not have been saved")
+		t.Error("Secret named \"" + configCmd.Use + "\" should not have been saved")
 	}
 
 	// No parameters passed
 	configUpdateCmd.Run(nil, []string{})
 
-	// Invalid seed value
-	configUpdateCmd.Run(nil, []string{"testkey", "seed1"})
+	// Invalid secret value
+	configUpdateCmd.Run(nil, []string{"testsecret", "seed1"})
 
 	// No collections file
 	os.Remove(defaultCollectionFile)
-	configUpdateCmd.Run(nil, []string{"testkey", "seed"})
+	configUpdateCmd.Run(nil, []string{"testsecret", "seed"})
 }

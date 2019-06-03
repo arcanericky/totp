@@ -6,6 +6,8 @@ import (
 	"runtime"
 )
 
+const defaultBaseCollectionFile = "totp-config.json"
+
 var defaultCollectionFile string
 var reservedCommands = []string{configCmd.Use, versionCmd.Use}
 
@@ -21,9 +23,9 @@ func isReservedCommand(name string) bool {
 
 func setCollectionFile(goos string) {
 	if goos == "windows" {
-		defaultCollectionFile = filepath.Join(os.Getenv("LOCALAPPDATA"), "totp-config.json")
+		defaultCollectionFile = filepath.Join(os.Getenv("LOCALAPPDATA"), defaultBaseCollectionFile)
 	} else {
-		defaultCollectionFile = filepath.Join(os.Getenv("HOME"), ".totp-config.json")
+		defaultCollectionFile = filepath.Join(os.Getenv("HOME"), "."+defaultBaseCollectionFile)
 	}
 }
 

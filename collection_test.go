@@ -5,59 +5,56 @@ import (
 	"testing"
 )
 
-func testDeleteKey(t *testing.T, testKey string, c *Collection) {
+func testDeleteSecret(t *testing.T, testSecret string, c *Collection) {
 	t.Helper()
 
-	_, err := c.DeleteKey(testKey)
+	_, err := c.DeleteSecret(testSecret)
 	if err != nil {
-		t.Error("DeleteKey on valid key returned error", err)
+		t.Error("DeleteSecret on valid secret name returned error", err)
 	}
 
-	_, err = c.GetKey(testKey)
+	_, err = c.GetSecret(testSecret)
 	if err == nil {
-		t.Error("Error deleting key", testKey)
+		t.Error("Error deleting secret", testSecret)
 	}
 }
 
 func TestWriteProtected(t *testing.T) {
-	name := "name"
-	seed := "seed"
+	secretName := "name"
+	secretValue := "seed"
 
 	updatedValue := "updatedvalue"
 
 	s := NewCollection()
 
-	key, err := s.UpdateKey(name, seed)
+	secret, err := s.UpdateSecret(secretName, secretValue)
 	if err != nil {
-		t.Error("Failed to add key for test")
+		t.Error("Failed to add secret for test")
 	}
 
-	key.Name = updatedValue
-	key.Seed = updatedValue
+	secret.Name = updatedValue
+	secret.Value = updatedValue
 
-	// Validate key returned on update can't be changed
-	key, err = s.GetKey(name)
-	if key.Name != name || key.Seed != seed {
-		t.Error("Internal settings key can be updated with returned key from UpdateKey()")
-	}
-
-	key.Name = updatedValue
-	key.Seed = updatedValue
-
-	// Validate key returned on get can't get changed
-	key, err = s.GetKey(name)
-	if key.Name != name || key.Seed != seed {
-		t.Error("Internal settings key can be updated with returned key from UpdateKey()")
+	// Validate secret returned on update can't be changed
+	secret, err = s.GetSecret(secretName)
+	if secret.Name != secretName || secret.Value != secretValue {
+		t.Error("Internal collection secret can be updated with returned secret from UpdateSecret()")
 	}
 }
 
 func TestSettingsNew(t *testing.T) {
 	collectionFile := "testcollection.json"
 
-	c := NewCollection()
+	// Test failure on Reader interface
+	c, err := NewCollectionWithReader(os.Stdout)
+	if err == nil {
+		t.Error("New collection should fail with os.Stdout as reader")
+	}
+
+	c = NewCollection()
 
 	// Test error on Save with no filename
-	err := c.Save()
+	err = c.Save()
 	if err == nil {
 		t.Error("Save collection with no filename should generate error")
 	}
@@ -66,24 +63,24 @@ func TestSettingsNew(t *testing.T) {
 	c.SetFilename(collectionFile)
 
 	// Create some data
-	type seedItem struct {
-		name string
-		seed string
+	type secretItem struct {
+		name  string
+		value string
 	}
 
 	// Create some test data
-	seedList := []seedItem{
-		{name: "name0", seed: "seed"},
-		{name: "name1", seed: "seed"},
-		{name: "name2", seed: "seed"},
-		{name: "name3", seed: "seed"},
-		{name: "name4", seed: "seed"},
+	secretList := []secretItem{
+		{name: "name0", value: "seed"},
+		{name: "name1", value: "seed"},
+		{name: "name2", value: "seed"},
+		{name: "name3", value: "seed"},
+		{name: "name4", value: "seed"},
 	}
 
-	for _, i := range seedList {
-		_, err := c.UpdateKey(i.name, i.seed)
+	for _, i := range secretList {
+		_, err := c.UpdateSecret(i.name, i.value)
 		if err != nil {
-			t.Error("Error updating key:", err)
+			t.Error("Error updating secret:", err)
 		}
 	}
 
@@ -94,11 +91,11 @@ func TestSettingsNew(t *testing.T) {
 
 	// Load test data
 	c, _ = NewCollectionWithFile(collectionFile)
-	for _, i := range seedList {
-		key, err := c.GetKey(i.name)
+	for _, i := range secretList {
+		secret, err := c.GetSecret(i.name)
 		if err == nil {
-			if key.Name != i.name || key.Seed != i.seed {
-				t.Error("Loaded keys don't match saved keys")
+			if secret.Name != i.name || secret.Value != i.value {
+				t.Error("Loaded secrets don't match saved secrets")
 			}
 		} else {
 			t.Error("Error loading test data:", err)
@@ -106,91 +103,95 @@ func TestSettingsNew(t *testing.T) {
 	}
 
 	// Test GenerateCode() methods
-	testKey := seedList[0].name
-	_, err = c.GenerateCode(testKey)
+	testSecret := secretList[0].name
+	_, err = c.GenerateCode(testSecret)
 	if err != nil {
-		t.Error("Error generating code for key", testKey)
+		t.Error("Error generating code for secret", testSecret)
 	}
 
-	// Attempt invalid key retrieval
-	key, err := c.GetKey("invalidkey")
+	// Attempt invalid secret retrieval
+	secret, err := c.GetSecret("invalidsecret")
 	if err == nil {
-		t.Error("GetKey returned success on invalid key retrieval")
+		t.Error("GetSecret returned success on invalid secret retrieval")
 	}
 
-	newSeed := "deadbeef"
+	newSecret := "deadbeef"
 
-	// Update key with empty name
-	key, err = c.UpdateKey("", newSeed)
+	// Update secret with empty name
+	secret, err = c.UpdateSecret("", newSecret)
 	if err == nil {
-		t.Error("Update key with empty name did not return error")
+		t.Error("UpdateSecret with empty name did not return error")
 	}
 
-	// Update key with empty seed
-	key, err = c.UpdateKey(seedList[0].name, "")
+	// Update secret with empty value
+	secret, err = c.UpdateSecret(secretList[0].name, "")
 	if err == nil {
-		t.Error("Update key with empty seed did not return error")
+		t.Error("UpdateSecret with empty value did not return error")
 	}
 
-	// Update a key
-	testKey = seedList[0].name
-	key, err = c.UpdateKey(testKey, newSeed)
+	// Update a secret
+	testSecret = secretList[0].name
+	secret, err = c.UpdateSecret(testSecret, newSecret)
 	if err != nil {
-		t.Error("Error updating key", key, err)
+		t.Error("Error updating secret", secret, err)
 	}
-	key, err = c.GetKey(testKey)
-	if err != nil || key.Seed != newSeed {
-		t.Error("Failed to update key")
+	secret, err = c.GetSecret(testSecret)
+	if err != nil || secret.Value != newSecret {
+		t.Error("Failed to update secret")
 	}
-	if key.DateAdded == key.DateModified {
-		t.Error("Date modified not updated on key update")
+	if secret.DateAdded == secret.DateModified {
+		t.Error("Date modified not updated on secret update")
 	}
 
-	// Rename a key
-	key, err = c.RenameKey(seedList[1].name, "newname")
+	// Rename a secret
+	secret, err = c.RenameSecret(secretList[1].name, "newname")
 	if err != nil {
-		t.Error("Failed to rename key")
+		t.Error("Failed to rename secret")
 	} else {
-		seedList[1].name = key.Name
+		secretList[1].name = secret.Name
 	}
 
-	// Attempt renamed key retrieval
-	key, err = c.GetKey(seedList[1].name)
+	// Attempt renamed secret retrieval
+	secret, err = c.GetSecret(secretList[1].name)
 	if err != nil {
-		t.Error("Key rename failed to persist")
+		t.Error("Secret rename failed to persist")
 	}
-	if key.DateAdded == key.DateModified {
-		t.Error("Date modified not updated on key rename")
+	if secret.DateAdded == secret.DateModified {
+		t.Error("Date modified not updated on secret rename")
 	}
 
-	// Rename a key that doesn't exist
-	key, err = c.RenameKey("invalidname", "newname")
+	// Rename a secret that doesn't exist
+	secret, err = c.RenameSecret("invalidname", "newname")
 	if err == nil {
-		t.Error("Key rename on non-existing key did not fail")
+		t.Error("Secret rename on non-existing secret did not fail")
 	}
 
-	// Rename to empty key
-	key, err = c.RenameKey("invalidname", "")
+	// Rename to empty secret
+	secret, err = c.RenameSecret("invalidname", "")
 	if err == nil {
-		t.Error("Key rename with empty target did not fail")
+		t.Error("Secret rename with empty target did not fail")
 	}
 
-	// Test key deletion
+	// Test secret deletion
 	// Middle
-	testDeleteKey(t, seedList[3].name, c)
+	testDeleteSecret(t, secretList[3].name, c)
 	// Bottom
-	testDeleteKey(t, seedList[len(seedList)-1].name, c)
+	testDeleteSecret(t, secretList[len(secretList)-1].name, c)
 	// Top
-	testDeleteKey(t, seedList[0].name, c)
+	testDeleteSecret(t, secretList[0].name, c)
 
-	// Key does not exist
-	testKey = "invalidkey"
-	_, err = c.DeleteKey(testKey)
+	// Secret does not exist
+	testSecret = "invalidname"
+	_, err = c.DeleteSecret(testSecret)
 	if err == nil {
-		t.Error("DeleteKey on non-existing key should return error", testKey)
+		t.Error("DeleteSecret on non-existing secret should return error", testSecret)
 	}
 
-	c.GetKeys()
+	c.GetSecrets()
+
+	c.SetFilename("")
+	c.SetWriter(os.Stdout)
+	c.Save()
 
 	os.Remove(collectionFile)
 }
