@@ -12,7 +12,8 @@ import (
 )
 
 const optionFile = "file"
-const optionSeed = "seed"
+const optionSecret = "secret"
+const optionStdin = "stdin"
 
 var rootCmd = &cobra.Command{
 	Use:   "totp",
@@ -31,19 +32,19 @@ var rootCmd = &cobra.Command{
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		seed, err := cmd.Flags().GetString(optionSeed)
+		secret, err := cmd.Flags().GetString(optionSecret)
 		if err != nil {
-			fmt.Println("Error getting seed", err)
+			fmt.Println("Error getting secret", err)
 			return
 		}
 
-		if len(seed) != 0 {
-			generateCodeWithSeed(seed)
+		if len(secret) != 0 {
+			generateCodeWithSecret(secret)
 			return
 		}
 
 		if len(args) != 1 {
-			fmt.Printf("Need the name of a seed to generate a code.\n\n")
+			fmt.Printf("Need the name of a secret to generate a code.\n\n")
 			cmd.Help()
 			return
 		}
@@ -52,8 +53,8 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-func generateCodeWithSeed(seed string) {
-	code, err := totp.GenerateCode(seed, time.Now())
+func generateCodeWithSecret(secret string) {
+	code, err := totp.GenerateCode(secret, time.Now())
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error generating code", err)
@@ -63,9 +64,13 @@ func generateCodeWithSeed(seed string) {
 }
 
 func generateCode(name string) {
-	s, err := api.NewCollectionWithFile(defaultCollectionFile)
+	var s *api.Collection
+	var err error
+
+	s, err = api.NewCollectionWithFile(defaultCollectionFile)
+
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error loading settings", err)
+		fmt.Fprintln(os.Stderr, "Error loading collection", err)
 	} else {
 		code, err := s.GenerateCode(name)
 
@@ -91,7 +96,8 @@ func Execute() int {
 }
 
 func init() {
-	rootCmd.Flags().StringP(optionSeed, "s", "", "TOTP seed value")
-	rootCmd.PersistentFlags().StringP(optionFile, "f", "", "seed collection file")
-	rootCmd.SetUsageTemplate(strings.Replace(rootCmd.UsageTemplate(), "{{.UseLine}}", "{{.UseLine}}\n  {{.CommandPath}} [seed name]", 1))
+	rootCmd.Flags().StringP(optionSecret, "s", "", "TOTP secret value")
+	rootCmd.PersistentFlags().StringP(optionFile, "f", "", "secret collection file")
+
+	rootCmd.SetUsageTemplate(strings.Replace(rootCmd.UsageTemplate(), "{{.UseLine}}", "{{.UseLine}}\n  {{.CommandPath}} [secret name]", 1))
 }

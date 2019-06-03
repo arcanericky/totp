@@ -3,49 +3,54 @@ package totp
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+	"io"
 	"io/ioutil"
+	"os"
 	"time"
 
 	"github.com/pquerna/otp/totp"
 )
 
-// Entry is a struct containing data necessary for working with keys,
-// namely, the name of the key and the seed value
-type Entry struct {
+var errSecretNotFound = errors.New("Secret not found")
+var errNoFilename = errors.New("No filename")
+var errSecretNameEmpty = errors.New("Secret name empty")
+var errSecretValueEmpty = errors.New("Secret value empty")
+
+// Secret is a struct containing data necessary for working with secrets,
+// namely, the name of the secret name and the secret value
+type Secret struct {
 	DateAdded    time.Time
 	DateModified time.Time
 	Name         string
-	Seed         string
+	Value        string
 }
 
-// Collection is a struct that holds settings data
+// Collection is a struct that holds TOTP data
 type Collection struct {
-	seeds    map[string]Entry
+	Secrets  map[string]Secret
 	filename string
+	writer   io.Writer
 }
 
-// SettingsInterface is used for DI when needed
-type SettingsInterface interface {
+// CollectionInterface is used for DI when needed
+type CollectionInterface interface {
+	DeleteSecret(string) (Secret, error)
+	GetSecret(string) (Secret, error)
+	GetSecrets() []Secret
 	Save() error
-
-	DeleteKey(string) (Entry, error)
-	GetKey(string) (Entry, error)
-	GetKeys() []Entry
 	SetFilename(string) string
-	UpdateKey(string, string) (Entry, error)
+	UpdateSecret(string, string) (Secret, error)
 }
 
-// Save serializes (marshals) the entire TotpSettings struct and writes it to
+// Save serializes (marshals) the Collections struct and writes it to
 // a file
 func (c *Collection) Save() error {
-	var err error
+	serializedSettings, err := c.Serialize()
 
-	if len(c.filename) == 0 {
-		err = errors.New("no filename configured")
-	} else {
-		serializedSettings, err := c.Serialize()
-		if err == nil {
+	if err == nil {
+		if len(c.filename) == 0 && c.writer != nil {
+			c.writer.Write(serializedSettings)
+		} else {
 			err = ioutil.WriteFile(c.filename, serializedSettings, 0600)
 		}
 	}
@@ -53,121 +58,126 @@ func (c *Collection) Save() error {
 	return err
 }
 
-// DeleteKey deletes an Entry by name
-func (c *Collection) DeleteKey(name string) (Entry, error) {
+// DeleteSecret deletes an Entry by name
+func (c *Collection) DeleteSecret(name string) (Secret, error) {
 	var err error
 
-	retKey, ok := c.seeds[name]
+	retSecret, ok := c.Secrets[name]
 
 	if ok == true {
-		delete(c.seeds, name)
+		delete(c.Secrets, name)
 	} else {
-		err = errors.New("Entry does not exist")
+		err = errSecretNotFound
 	}
 
-	return retKey, err
+	return retSecret, err
 }
 
-// UpdateKey updates (if it exists) or adds a new Entry with the
-// name and seed given
-func (c *Collection) UpdateKey(name, seed string) (Entry, error) {
-	var retKey Entry
+// UpdateSecret updates (if it exists) or adds a new Entry with the
+// name and value given
+func (c *Collection) UpdateSecret(name, value string) (Secret, error) {
+	var retSecret Secret
 	var err error
 
 	if len(name) == 0 {
-		err = errors.New("Key name must not be empty")
-	} else if len(seed) == 0 {
-		err = errors.New("Key seed must not be empty")
+		err = errSecretNameEmpty
+	} else if len(value) == 0 {
+		err = errSecretValueEmpty
 	} else {
-		_, err = totp.GenerateCode(seed, time.Now())
+		_, err = totp.GenerateCode(value, time.Now())
 		if err == nil {
-			retKey, ok := c.seeds[name]
+			retSecret, ok := c.Secrets[name]
 			if ok == true {
-				retKey.Seed = seed
-				retKey.DateModified = time.Now()
-				c.seeds[name] = retKey
+				retSecret.Value = value
+				retSecret.DateModified = time.Now()
+				c.Secrets[name] = retSecret
 			} else {
 				dateAdded := time.Now()
-				newKey := Entry{Name: name, Seed: seed, DateAdded: dateAdded, DateModified: dateAdded}
-				c.seeds[name] = newKey
-				retKey = newKey
+				newSecret := Secret{Name: name, Value: value, DateAdded: dateAdded, DateModified: dateAdded}
+				c.Secrets[name] = newSecret
+				retSecret = newSecret
 			}
 		}
 	}
 
-	return retKey, err
+	return retSecret, err
 }
 
-// RenameKey renames a key
-func (c *Collection) RenameKey(oldName, newName string) (Entry, error) {
-	var retKey Entry
+// RenameSecret renames a secret
+func (c *Collection) RenameSecret(oldName, newName string) (Secret, error) {
+	var retSecret Secret
 	var ok bool
 	var err error
 
 	if len(newName) != 0 {
-		retKey, ok = c.seeds[oldName]
+		retSecret, ok = c.Secrets[oldName]
 		if ok == true {
-			retKey.Name = newName
-			retKey.DateModified = time.Now()
-			c.seeds[newName] = retKey
-			delete(c.seeds, oldName)
+			retSecret.Name = newName
+			retSecret.DateModified = time.Now()
+			c.Secrets[newName] = retSecret
+			delete(c.Secrets, oldName)
 		} else {
-			err = errors.New("Key not found")
+			err = errSecretNotFound
 		}
 	} else {
-		err = errors.New("Key name must not be empty")
+		err = errSecretNameEmpty
 	}
 
-	return retKey, err
+	return retSecret, err
 }
 
-// GetKey returns an Entry with the name argument
-func (c *Collection) GetKey(name string) (Entry, error) {
+// GetSecret returns an Secret with the name argument
+func (c *Collection) GetSecret(name string) (Secret, error) {
 	var err error
 
-	retKey, ok := c.seeds[name]
+	retSecret, ok := c.Secrets[name]
 	if ok == false {
-		err = fmt.Errorf("Key name \"%s\" not found", name)
+		err = errSecretNotFound
 	}
 
-	return retKey, err
+	return retSecret, err
 }
 
-// GetKeys returns a slice containing all the keys
-func (c *Collection) GetKeys() []Entry {
-	keys := []Entry{}
-	for _, key := range c.seeds {
-		keys = append(keys, key)
+// GetSecrets returns a slice containing all the secrets
+func (c *Collection) GetSecrets() []Secret {
+	secrets := []Secret{}
+	for _, secret := range c.Secrets {
+		secrets = append(secrets, secret)
 	}
 
-	return keys
+	return secrets
 }
 
-// GenerateCodeWithTime creates a TOTP code with the named entry's seed
+// GenerateCodeWithTime creates a TOTP code with the named secret's value
 func (c *Collection) GenerateCodeWithTime(name string, time time.Time) (string, error) {
 	var code string
 
-	key, err := c.GetKey(name)
+	secret, err := c.GetSecret(name)
 	if err == nil {
-		code, err = totp.GenerateCode(key.Seed, time)
+		code, err = totp.GenerateCode(secret.Value, time)
 	}
 
 	return code, err
 }
 
-// GenerateCode creates a TOTP code with the named entry's seed
+// GenerateCode creates a TOTP code with the named secret's value
 func (c *Collection) GenerateCode(name string) (string, error) {
 	return c.GenerateCodeWithTime(name, time.Now())
 }
 
-// Serialize marshals a Entries struct into a byte array
+// Serialize marshals the Collection struct into a byte array
 func (c *Collection) Serialize() ([]byte, error) {
-	return json.MarshalIndent(c.seeds, "", "  ")
+	return json.MarshalIndent(c, "", "  ")
 }
 
-// Deserialize unmarshals a byte array into a Entries struct
+// Deserialize unmarshals a byte array into a Collection struct
 func (c *Collection) Deserialize(data []byte) error {
-	return json.Unmarshal(data, &c.seeds)
+	return json.Unmarshal(data, &c)
+}
+
+// SetWriter sets the writer for the Save method
+func (c *Collection) SetWriter(writer io.Writer) {
+	c.writer = writer
 }
 
 // SetFilename sets the filename for the Save method
@@ -180,7 +190,7 @@ func (c *Collection) SetFilename(filename string) string {
 // NewCollection creates a new, blank Collection instance
 func NewCollection() *Collection {
 	c := new(Collection)
-	c.seeds = make(map[string]Entry)
+	c.Secrets = make(map[string]Secret)
 	return c
 }
 
@@ -192,14 +202,25 @@ func NewCollectionWithData(data []byte) (*Collection, error) {
 	return c, err
 }
 
+// NewCollectionWithReader creates a new collection from a Reader interface
+func NewCollectionWithReader(reader io.Reader) (*Collection, error) {
+	data, err := ioutil.ReadAll(reader)
+
+	if err != nil {
+		return NewCollection(), err
+	}
+
+	return NewCollectionWithData(data)
+}
+
 // NewCollectionWithFile creates a new Collection instance with data from a file
 func NewCollectionWithFile(filename string) (*Collection, error) {
-	data, err := ioutil.ReadFile(filename)
-
 	c := NewCollection()
 
+	f, err := os.Open(filename)
+
 	if err == nil {
-		c, err = NewCollectionWithData(data)
+		c, err = NewCollectionWithReader(f)
 	}
 
 	c.filename = filename

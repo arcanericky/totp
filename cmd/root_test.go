@@ -8,44 +8,43 @@ import (
 func TestRoot(t *testing.T) {
 	defaultCollectionFile = "testcollection"
 
-	seedList := createTestData(t)
+	secretList := createTestData(t)
 
 	// No parameters
 	rootCmd.Run(rootCmd, []string{})
 
-	// Valid entry and seed
-	rootCmd.Run(rootCmd, []string{seedList[0].name})
+	// Valid entry and secret
+	rootCmd.Run(rootCmd, []string{secretList[0].name})
 
 	// Non-existing entry
-	rootCmd.Run(rootCmd, []string{"invalidkey"})
+	rootCmd.Run(rootCmd, []string{"invalidsecret"})
 
 	// No collections file
 	os.Remove(defaultCollectionFile)
-	rootCmd.Run(rootCmd, []string{seedList[0].name})
+	rootCmd.Run(rootCmd, []string{secretList[0].name})
 
-	// Provide seed option
-	rootCmd.Flags().Set(optionSeed, "seed")
+	// Provide secret option
+	rootCmd.Flags().Set(optionSecret, "seed")
 	rootCmd.Run(rootCmd, []string{})
 
-	// Provide invalid seed option
-	rootCmd.Flags().Set(optionSeed, "seed1")
+	// Provide invalid secret option
+	rootCmd.Flags().Set(optionSecret, "seed1")
 	rootCmd.Run(rootCmd, []string{})
 
 	// File option
 	rootCmd.Flags().Set(optionFile, defaultCollectionFile)
 	rootCmd.Flags().Lookup(optionFile).Changed = true
-	rootCmd.PersistentPreRun(rootCmd, []string{"key"})
+	rootCmd.PersistentPreRun(rootCmd, []string{"secret"})
 
-	// Error when parsing seed option
 	rootCmd.ResetFlags()
-	rootCmd.Flags().Int64P(optionSeed, "s", 0, "")
+
+	// Test error on secret option
 	rootCmd.Run(rootCmd, []string{})
 
-	// Error when parsing file option
-	rootCmd.ResetFlags()
+	// Test error on secret option
 	rootCmd.Flags().Int64P(optionFile, "f", 0, "")
 	rootCmd.Flags().Lookup(optionFile).Changed = true
-	rootCmd.PersistentPreRun(rootCmd, []string{"key"})
+	rootCmd.PersistentPreRun(rootCmd, []string{"secret"})
 
 	Execute()
 

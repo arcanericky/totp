@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -17,6 +18,7 @@ var configResetCmd = &cobra.Command{
 
 func configReset() {
 	os.Remove(defaultCollectionFile)
+	fmt.Println("Collection file removed")
 }
 
 func init() {

@@ -10,54 +10,57 @@ It's a time-based one-time password (TOTP) code generator.
 
 It generates TOTP codes used for two-factor authentication at sites such as Google, GitHub, Dropbox, and AWS.
 
+**Warning**
+Every copy of your two-factor credentials increases your risk profile. Using this utility is no exception. This utility will store your TOTP secrets unencrypted on your filesystem. The only protection offered is to store these secrets in a file readable by only your user and protected by the operating system only.
+
 ## How to Use
 
-**Add TOTP seeds** to the TOTP configuration file with the `config add` option, specifying the name and seed value. Note the seed names are **case sensitive**.
+**Add TOTP secrets** to the TOTP configuration file with the `config add` option, specifying the name and secret value. Note the secret names are **case sensitive**.
 
 ```
 $ totp config add google seed
 ```
 
-**Generate TOTP codes** using the `totp` command to specify the seed name. Note that because `totp` reserves the use of the words `config` and `version`, don't use them to name a seed.
+**Generate TOTP codes** using the `totp` command to specify the secret name. Note that because `totp` reserves the use of the words `config` and `version`, don't use them to name a secret.
 
 ```
 $ totp google
 ```
 
-**List the seed entries** with the `config list` command.
+**List the secret entries** with the `config list` command.
 
 ```
 $ totp config list
 ```
 
-**Update seed entries** using the `config update` command. Note that `config update` and `config add` are actually the same command and can be used interchangeably.
+**Update secret entries** using the `config update` command. Note that `config update` and `config add` are actually the same command and can be used interchangeably.
 
 ```
 $ totp config update google newseed
 ```
 
-**Rename the seed entries** with the `config rename` command
+**Rename the secret entries** with the `config rename` command
 
 ```
 $ totp config rename google google-main
 ```
 
-**Delete seed entries** with the `config delete` command
+**Delete secret entries** with the `config delete` command
 
 ```
 $ totp config delete google-main
 ```
 
-**Remove all the keys** and start over, use the `config reset` command
+**Remove all the secrets** and start over, use the `config reset` command
 
 ```
 $ totp config reset
 ```
 
-**Use an ad-hoc seed** to generate a code by using the `--seed` option
+**Use an ad-hoc secret** to generate a code by using the `--secret` option
 
 ```
-$ totp --seed seed
+$ totp --secret seed
 ```
 
 **For help** on any of the above, use the `--help` option. Examples are
@@ -107,4 +110,4 @@ Unit tests for new code are required. Use `make test` to verify coverage. Covera
 
 ## Inspiration
 
-My [ga-cmd project](https://github.com/arcanericky/ga-cmd) is more popular than I expected. It's basically the same as `totp` with a much smaller executable, but the list of seeds must be edited manually. This `totp` project allows the user to maintain the seed collection through the `totp` command line interface, run on a variety of operating systems, and gives me a platform to practice my Go coding.
+My [ga-cmd project](https://github.com/arcanericky/ga-cmd) is more popular than I expected. It's basically the same as `totp` with a much smaller executable, but the list of secrets must be edited manually. This `totp` project allows the user to maintain the secret collection through the `totp` command line interface, run on a variety of operating systems, and gives me a platform to practice my Go coding.
