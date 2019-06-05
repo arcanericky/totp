@@ -53,10 +53,10 @@ func TestSettingsNew(t *testing.T) {
 
 	c = NewCollection()
 
-	// Test error on Save with no filename
+	// Test error on Save with no filename, no writer
 	err = c.Save()
 	if err == nil {
-		t.Error("Save collection with no filename should generate error")
+		t.Error("Save collection with no filename or writer should generate error")
 	}
 
 	// Set filename for remainder of tests

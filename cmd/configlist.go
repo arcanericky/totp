@@ -70,7 +70,7 @@ func listAllInfo(secrets []totp.Secret) {
 }
 
 func listSecrets(cmd *cobra.Command) {
-	c, err := totp.NewCollectionWithFile(defaultCollectionFile)
+	c, err := collectionFile.loader()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error loading collection", err)
 	} else {
@@ -93,4 +93,5 @@ func listSecrets(cmd *cobra.Command) {
 func init() {
 	configCmd.AddCommand(configListCmd)
 	configListCmd.Flags().BoolP("names", "n", false, "list only secret names")
+	configListCmd.Flags().BoolP(optionStdio, "", false, "load data from stdin")
 }

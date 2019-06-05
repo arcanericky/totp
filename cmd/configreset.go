@@ -17,7 +17,7 @@ var configResetCmd = &cobra.Command{
 }
 
 func configReset() {
-	os.Remove(defaultCollectionFile)
+	os.Remove(collectionFile.filename)
 	fmt.Println("Collection file removed")
 }
 

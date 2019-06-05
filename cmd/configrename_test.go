@@ -8,7 +8,7 @@ import (
 )
 
 func TestConfigRename(t *testing.T) {
-	defaultCollectionFile = "testcollection"
+	collectionFile.filename = "testcollection"
 
 	secrets := createTestData(t)
 
@@ -17,7 +17,7 @@ func TestConfigRename(t *testing.T) {
 	// Valid parameters
 	newName := "newName"
 	configRenameCmd.Run(nil, []string{secrets[0].name, newName})
-	c, err := totp.NewCollectionWithFile(defaultCollectionFile)
+	c, err := totp.NewCollectionWithFile(collectionFile.filename)
 	if err != nil {
 		t.Error("Could not load collection for rename test from file")
 	}
@@ -29,7 +29,7 @@ func TestConfigRename(t *testing.T) {
 
 	// Test rename to config
 	configRenameCmd.Run(nil, []string{newName, configCmd.Use})
-	c, err = totp.NewCollectionWithFile(defaultCollectionFile)
+	c, err = totp.NewCollectionWithFile(collectionFile.filename)
 	if err != nil {
 		t.Error("Could not load collection for rename test from file")
 	}
@@ -40,6 +40,6 @@ func TestConfigRename(t *testing.T) {
 	}
 
 	// No collections file
-	os.Remove(defaultCollectionFile)
+	os.Remove(collectionFile.filename)
 	configRenameCmd.Run(nil, []string{secrets[0].name, "newname"})
 }

@@ -12,7 +12,7 @@ import (
 )
 
 var errSecretNotFound = errors.New("Secret not found")
-var errNoFilename = errors.New("No filename")
+var errNoFilename = errors.New("No save target")
 var errSecretNameEmpty = errors.New("Secret name empty")
 var errSecretValueEmpty = errors.New("Secret value empty")
 
@@ -45,13 +45,26 @@ type CollectionInterface interface {
 // Save serializes (marshals) the Collections struct and writes it to
 // a file
 func (c *Collection) Save() error {
+	var err error
+	var writerErr error
+
 	serializedSettings, err := c.Serialize()
 
 	if err == nil {
-		if len(c.filename) == 0 && c.writer != nil {
-			c.writer.Write(serializedSettings)
-		} else {
+		if c.writer == nil && len(c.filename) == 0 {
+			err = errNoFilename
+		}
+
+		if c.writer != nil {
+			_, writerErr = c.writer.Write(serializedSettings)
+		}
+
+		if len(c.filename) != 0 {
 			err = ioutil.WriteFile(c.filename, serializedSettings, 0600)
+		}
+
+		if err == nil {
+			err = writerErr
 		}
 	}
 

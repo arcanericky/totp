@@ -8,14 +8,14 @@ import (
 )
 
 func TestConfigUpdate(t *testing.T) {
-	defaultCollectionFile = "testcollection"
+	collectionFile.filename = "testcollection"
 
 	createTestData(t)
 
 	// Valid parameters
 	secretName := "testsecret"
 	configUpdateCmd.Run(nil, []string{secretName, "seed"})
-	c, err := totp.NewCollectionWithFile(defaultCollectionFile)
+	c, err := totp.NewCollectionWithFile(collectionFile.filename)
 	if err != nil {
 		t.Error("Could not load collection for update test from file")
 	}
@@ -28,7 +28,7 @@ func TestConfigUpdate(t *testing.T) {
 	// Test update secret
 	newSecret := "seedseed"
 	configUpdateCmd.Run(nil, []string{secretName, newSecret})
-	c, err = totp.NewCollectionWithFile(defaultCollectionFile)
+	c, err = totp.NewCollectionWithFile(collectionFile.filename)
 	if err != nil {
 		t.Error("Could not load collection for update test from file")
 	}
@@ -41,7 +41,7 @@ func TestConfigUpdate(t *testing.T) {
 	// Test using secret named 'config'
 	secretName = configCmd.Use
 	configUpdateCmd.Run(nil, []string{secretName, "seed"})
-	c, err = totp.NewCollectionWithFile(defaultCollectionFile)
+	c, err = totp.NewCollectionWithFile(collectionFile.filename)
 	if err != nil {
 		t.Error("Could not load collection for update test from file")
 	}
@@ -58,6 +58,6 @@ func TestConfigUpdate(t *testing.T) {
 	configUpdateCmd.Run(nil, []string{"testsecret", "seed1"})
 
 	// No collections file
-	os.Remove(defaultCollectionFile)
+	os.Remove(collectionFile.filename)
 	configUpdateCmd.Run(nil, []string{"testsecret", "seed"})
 }
