@@ -15,7 +15,7 @@ func createTestData(t *testing.T) []secretItem {
 	t.Helper()
 
 	// Create test data
-	c, _ := totp.NewCollectionWithFile(defaultCollectionFile)
+	c, _ := totp.NewCollectionWithFile(collectionFile.filename)
 
 	// Create some test data
 	secretList := []secretItem{

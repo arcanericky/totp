@@ -75,6 +75,72 @@ $ totp config --help
 ```
 $ . <(totp config completion)
 ```
+## Using the Sdio Option
+
+If storing secrets in the clear isn't ideal for you, `totp` supports streaming the shared secret collection through stdin and stdout with the `--stdio` option. This allows you to roll your own encryption or support other methods of maintaining shared secrets.
+
+The `totp <secret name>` and `totp config list` commands support loading the collection via standard input. The 
+`totp config update`, `totp config delete`, and `totp config rename` commands support loading via standard input and sending the modified collection to standard output. Experiment with the `--stdio` option to observe how this works.
+
+**Learning with Cleartext Data**
+
+Note the `--file` option can achieve the same results as this example. This is meant to teach how stdio works with `totp`.
+
+Create a collection
+
+```
+totp config add --stdio secretname myvalue < /dev/null > totp.json
+```
+
+View the collection
+
+```
+totp config list --stdio < totp.json
+```
+
+Generate a TOTP code
+
+```
+totp secretname --stdio < totp.json
+```
+
+**Encrypting Shared Secret Collection**
+
+Using what was learned above, a contrived example for encrypting data with [GnuPG](https://gnupg.org/) follows.
+
+Create an encrypted collection
+```
+totp config add --stdio secretname myvalue < /dev/null | \
+  gpg --batch --yes --passphrase mypassphrase --output totp-collection.gpg --symmetric
+```
+
+View the collection
+
+```
+gpg --quiet --batch --passphrase mypassphrase --decrypt totp-collection.gpg | \
+  totp config list --stdio
+```
+
+Add another secret
+
+```
+gpg --quiet --batch --passphrase mypassphrase --decrypt totp-collection.gpg | \
+  totp config add  --stdio newname newvalue | \
+  gpg --batch --yes --passphrase mypassphrase --output totp-collection.gpg --symmetric
+```
+
+View the modified collection
+
+```
+gpg --quiet --batch --passphrase mypassphrase --decrypt totp-collection.gpg | \
+  totp config list --stdio
+```
+
+Generate a TOTP code
+
+```
+gpg --quiet --batch --passphrase mypassphrase --decrypt totp-collection.gpg | totp --stdio secretname
+```
 
 ## Building
 
@@ -111,3 +177,7 @@ Unit tests for new code are required. Use `make test` to verify coverage. Covera
 ## Inspiration
 
 My [ga-cmd project](https://github.com/arcanericky/ga-cmd) is more popular than I expected. It's basically the same as `totp` with a much smaller executable, but the list of secrets must be edited manually. This `totp` project allows the user to maintain the secret collection through the `totp` command line interface, run on a variety of operating systems, and gives me a platform to practice my Go coding.
+
+## Credits
+
+This utility uses the [otp package by pquerna](https://github.com/pquerna/otp). Without this library, I probably woudn't have bothered creating this.

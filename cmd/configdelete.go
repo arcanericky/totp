@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/arcanericky/totp"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +23,7 @@ var configDeleteCmd = &cobra.Command{
 }
 
 func deleteSecret(name string) {
-	s, err := totp.NewCollectionWithFile(defaultCollectionFile)
+	s, err := collectionFile.loader()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error loading settings", err)
 	} else {
@@ -41,4 +40,5 @@ func deleteSecret(name string) {
 
 func init() {
 	configCmd.AddCommand(configDeleteCmd)
+	configDeleteCmd.Flags().BoolP(optionStdio, "", false, "load with stdin, save with stdout")
 }

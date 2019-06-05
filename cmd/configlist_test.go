@@ -6,7 +6,7 @@ import (
 )
 
 func TestConfigList(t *testing.T) {
-	defaultCollectionFile = "testcollection"
+	collectionFile.filename = "testcollection"
 
 	createTestData(t)
 
@@ -20,6 +20,6 @@ func TestConfigList(t *testing.T) {
 	configListCmd.Run(configListCmd, []string{})
 
 	// No collections file
-	os.Remove(defaultCollectionFile)
+	os.Remove(collectionFile.filename)
 	configListCmd.Run(configListCmd, []string{})
 }

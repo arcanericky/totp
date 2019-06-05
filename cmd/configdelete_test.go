@@ -8,7 +8,7 @@ import (
 )
 
 func TestConfigDelete(t *testing.T) {
-	defaultCollectionFile = "testcollection"
+	collectionFile.filename = "testcollection"
 
 	secretList := createTestData(t)
 
@@ -20,7 +20,7 @@ func TestConfigDelete(t *testing.T) {
 
 	// Successful delete
 	configDeleteCmd.Run(nil, []string{secretList[3].name})
-	c, err := totp.NewCollectionWithFile(defaultCollectionFile)
+	c, err := totp.NewCollectionWithFile(collectionFile.filename)
 	if err != nil {
 		t.Error("Could not load collection for delete test from file")
 	}
@@ -31,6 +31,6 @@ func TestConfigDelete(t *testing.T) {
 	}
 
 	// No collections file
-	os.Remove(defaultCollectionFile)
+	os.Remove(collectionFile.filename)
 	deleteSecret(secretList[3].name)
 }

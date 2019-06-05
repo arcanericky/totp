@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/arcanericky/totp"
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +29,7 @@ func renameSecret(source, target string) {
 		return
 	}
 
-	s, _ := totp.NewCollectionWithFile(defaultCollectionFile)
+	s, _ := collectionFile.loader()
 	_, err := s.RenameSecret(source, target)
 
 	if err != nil {
@@ -43,5 +42,6 @@ func renameSecret(source, target string) {
 
 func init() {
 	configCmd.AddCommand(configRenameCmd)
+	configRenameCmd.Flags().BoolP(optionStdio, "", false, "load with stdin, save with stdout")
 	configRenameCmd.SetUsageTemplate(strings.Replace(rootCmd.UsageTemplate(), "{{.UseLine}}", "{{.UseLine}}\n  {{.CommandPath}} [old secret name] [new secret name]", 1))
 }
