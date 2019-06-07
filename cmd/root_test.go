@@ -39,6 +39,9 @@ func TestRoot(t *testing.T) {
 	os.Remove(collectionFile.filename)
 	rootCmd.Run(rootCmd, []string{secretList[0].name})
 
+	// Excessive args
+	rootCmd.Run(rootCmd, []string{"secretname", "extraarg"})
+
 	// Provide secret option
 	rootCmd.Flags().Set(optionSecret, "seed")
 	rootCmd.Run(rootCmd, []string{})
@@ -55,6 +58,14 @@ func TestRoot(t *testing.T) {
 	// Stdio option
 	rootCmd.Flags().Set(optionStdio, "true")
 	rootCmd.PersistentPreRun(rootCmd, []string{"secret"})
+
+	// Time option
+	rootCmd.Flags().Set(optionTime, "2019-06-01T20:00:00-05:00")
+	rootCmd.Run(rootCmd, []string{})
+
+	// Give secret and secret name
+	rootCmd.Flags().Set(optionSecret, "seed")
+	rootCmd.Run(rootCmd, []string{"secretname"})
 
 	// Invalid time option
 	rootCmd.Flags().Set(optionTime, "invalidtime")
@@ -80,6 +91,20 @@ func TestRoot(t *testing.T) {
 
 	// optionSecret error
 	f = rootCmd.Flags().Lookup(optionSecret)
+	savedFlagValue = f.Value
+	f.Value = new(flagValue)
+	rootCmd.Run(rootCmd, []string{})
+	f.Value = savedFlagValue
+
+	// optionBackward error
+	f = rootCmd.Flags().Lookup(optionBackward)
+	savedFlagValue = f.Value
+	f.Value = new(flagValue)
+	rootCmd.Run(rootCmd, []string{})
+	f.Value = savedFlagValue
+
+	// optionForward error
+	f = rootCmd.Flags().Lookup(optionForward)
 	savedFlagValue = f.Value
 	f.Value = new(flagValue)
 	rootCmd.Run(rootCmd, []string{})
