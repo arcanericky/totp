@@ -18,13 +18,13 @@ Every copy of your two-factor credentials increases your risk profile. Using thi
 **Add TOTP secrets** to the TOTP configuration file with the `config add` option, specifying the name and secret value. Note the secret names are **case sensitive**.
 
 ```
-$ totp config add google seed
+$ totp config add mysecretname seed
 ```
 
 **Generate TOTP codes** using the `totp` command to specify the secret name. Note that because `totp` reserves the use of the words `config` and `version`, don't use them to name a secret.
 
 ```
-$ totp google
+$ totp mysecretname
 ```
 
 **List the secret entries** with the `config list` command.
@@ -36,22 +36,22 @@ $ totp config list
 **Update secret entries** using the `config update` command. Note that `config update` and `config add` are actually the same command and can be used interchangeably.
 
 ```
-$ totp config update google newseed
+$ totp config update mysecretname newseed
 ```
 
 **Rename the secret entries** with the `config rename` command
 
 ```
-$ totp config rename google google-main
+$ totp config rename mysecretname mynewname
 ```
 
 **Delete secret entries** with the `config delete` command
 
 ```
-$ totp config delete google-main
+$ totp config delete mynewname
 ```
 
-**Remove all the secrets** and start over, use the `config reset` command
+**Remove all the secrets** and start over using the `config reset` command
 
 ```
 $ totp config reset
@@ -70,11 +70,40 @@ $ totp --help
 $ totp config --help
 ```
 
-**Bash completion** can be enabled by using `config completion`
+**Bash completion** can be enabled by using `config completion`.
 
 ```
 $ . <(totp config completion)
 ```
+
+## Using the Time Machine
+
+`totp` has the `--time`, `--forward`, and `--backward` options that are used to manipulate the time for which the TOTP code is generated. This is useful if `totp` is being used on a machine with the incorrect time.
+
+The `--time` option takes an [RFC3339 formatted time string](https://tools.ietf.org/html/rfc3339) as its argument and uses it to generate the TOTP code. Note that the `--forward` and `--backward` options will modify this option value.
+
+Examples with `--time`:
+
+```
+$ date '+%FT%T%:z'
+2019-06-01T19:58:47-05:00
+$ totp --time $(date '+%FT%T%:z') --secret seed
+931665
+$ totp --time 2019-06-01T20:00:00-05:00 --secret seed
+526171
+```
+
+The `--forward` and `--backward` options move the current time forward and backward by their duration formatted arguments. See [Go's `time.ParseDuration()`](https://golang.org/pkg/time/#ParseDuration) documentation for more details on this format.
+
+Examples with `--forward` and `--backward`
+
+```
+$ totp --time 2019-06-01T20:00:00-05:00 --backward 3m --secret seed
+222296
+$ totp --time 2019-06-01T20:00:00-05:00 --forward 30s --secret seed
+820148
+```
+
 ## Using the Sdio Option
 
 If storing secrets in the clear isn't ideal for you, `totp` supports streaming the shared secret collection through stdin and stdout with the `--stdio` option. This allows you to roll your own encryption or support other methods of maintaining shared secrets.
@@ -160,6 +189,12 @@ For unit tests and code coverage reports:
 $ make test
 ```
 
+The coverage is output to `coverage.html`. Load it in browser for review. For example:
+
+```
+$ /opt/google/chrome/chrome file://$PWD/coverage.html
+```
+
 To build for a single platform (see the `Makefile` for the different targets)
 
 ```
@@ -176,7 +211,7 @@ Unit tests for new code are required. Use `make test` to verify coverage. Covera
 
 ## Inspiration
 
-My [ga-cmd project](https://github.com/arcanericky/ga-cmd) is more popular than I expected. It's basically the same as `totp` with a much smaller executable, but the list of secrets must be edited manually. This `totp` project allows the user to maintain the secret collection through the `totp` command line interface, run on a variety of operating systems, and gives me a platform to practice my Go coding.
+My [ga-cmd project](https://github.com/arcanericky/ga-cmd) is more popular than I expected. It's basically the same as `totp` with a much smaller executable, but the list of secrets must be edited manually and there aren't as many command line options. This `totp` project allows the user to maintain the secret collection through the `totp` command line interface, run on a variety of operating systems, and gives me a platform to practice my Go coding.
 
 ## Credits
 

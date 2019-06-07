@@ -11,10 +11,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const optionFile = "file"
-const optionSecret = "secret"
-const optionStdio = "stdio"
-const optionTime = "time"
+const (
+	optionFile     = "file"
+	optionSecret   = "secret"
+	optionStdio    = "stdio"
+	optionTime     = "time"
+	optionBackward = "backward"
+	optionForward  = "forward"
+)
 
 var rootCmd = &cobra.Command{
 	Use:   "totp",
@@ -53,6 +57,20 @@ var rootCmd = &cobra.Command{
 			return
 		}
 
+		// Process the backward option
+		backward, err := cmd.Flags().GetDuration(optionBackward)
+		if err != nil {
+			fmt.Println("Error processing backward option", err)
+			return
+		}
+
+		// Process the forward option
+		forward, err := cmd.Flags().GetDuration(optionForward)
+		if err != nil {
+			fmt.Println("Error processing forward option", err)
+			return
+		}
+
 		// Process the time option
 		timeString, err := cmd.Flags().GetString(optionTime)
 		if err != nil {
@@ -60,62 +78,86 @@ var rootCmd = &cobra.Command{
 			return
 		}
 
-		codeTime := time.Now()
+		// Default to time of now
+		codeTime := time.Now().Add(-backward)
+		codeTime = codeTime.Add(forward)
 
+		// Override if time was given
 		if len(timeString) > 0 {
 			codeTime, err = time.Parse(time.RFC3339, timeString)
 			if err != nil {
 				fmt.Println("Error parsing the time option", err)
 				return
 			}
+
+			codeTime = codeTime.Add(-backward)
+			codeTime = codeTime.Add(forward)
 		}
 
-		// Providing a secret name overrides the --secret option but
-		// should probably generate an error if both are given
-		if len(secret) != 0 {
-			generateCodeWithSecret(secret, codeTime)
-			return
-		}
+		secretLen := len(secret)
+		argsLen := len(args)
 
-		// If no secret or no secret name given, show help
-		if len(args) != 1 {
-			fmt.Fprintf(os.Stderr, "Need the name of a secret to generate a code.\n\n")
+		// No secret, no secret name
+		if secretLen == 0 && argsLen == 0 {
+			fmt.Fprintf(os.Stderr, "Secret name or secret is required.\n\n")
 			cmd.Help()
+
 			return
+		}
+
+		// Secret given but additional arguments were also given
+		if secretLen > 0 && argsLen > 0 {
+			fmt.Fprintf(os.Stderr, "Secret was given so additional arguments are not needed.\n\n")
+			cmd.Help()
+
+			return
+		}
+
+		// No secret given and too many args
+		if secretLen == 0 && argsLen > 1 {
+			fmt.Fprintf(os.Stderr, "Too many arguments. Only one secret name is required.\n\n")
+			cmd.Help()
+
+			return
+		}
+
+		// Load the secret name
+		secretName := ""
+		if argsLen == 1 {
+			secretName = args[0]
 		}
 
 		// If here then a stored shared secret is wanted
-		generateCode(args[0], codeTime)
+		generateCode(secretName, secret, codeTime)
 	},
 }
 
-func generateCodeWithSecret(secret string, t time.Time) {
-	code, err := totp.GenerateCode(secret, t)
-
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error generating code", err)
-	} else {
-		fmt.Println(code)
-	}
-}
-
-func generateCode(name string, t time.Time) {
-	var s *api.Collection
+func generateCode(name string, secret string, t time.Time) error {
+	var code string
 	var err error
+	var c *api.Collection
 
-	s, err = collectionFile.loader()
-
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error loading collection", err)
+	if len(secret) != 0 {
+		code, err = totp.GenerateCode(secret, t)
 	} else {
-		code, err := s.GenerateCodeWithTime(name, t)
+		c, err = collectionFile.loader()
 
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Error generating code", err)
+			fmt.Fprintln(os.Stderr, "Error loading collection", err)
 		} else {
-			fmt.Println(code)
+			code, err = c.GenerateCodeWithTime(name, t)
+
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "Error generating code", err)
+			}
 		}
 	}
+
+	if err == nil {
+		fmt.Println(code)
+	}
+
+	return err
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -132,10 +174,15 @@ func Execute() int {
 }
 
 func init() {
+	var duration time.Duration
+
 	rootCmd.PersistentFlags().StringP(optionFile, "f", "", "secret collection file")
 
 	rootCmd.Flags().StringP(optionSecret, "s", "", "TOTP secret value")
 	rootCmd.Flags().BoolP(optionStdio, "", false, "load with stdin")
-	rootCmd.Flags().StringP(optionTime, "", "", "RFC3339 time for TOTP (2006-01-02T15:04:05Z07:00)")
+	rootCmd.Flags().StringP(optionTime, "", "", "RFC3339 time for TOTP (2019-06-23T20:00:00-05:00)")
+	rootCmd.Flags().DurationP(optionBackward, "", duration, "move time backward (ex. \"30s\")")
+	rootCmd.Flags().DurationP(optionForward, "", duration, "move time forward (ex. \"1m\")")
+
 	rootCmd.SetUsageTemplate(strings.Replace(rootCmd.UsageTemplate(), "{{.UseLine}}", "{{.UseLine}}\n  {{.CommandPath}} [secret name]", 1))
 }
