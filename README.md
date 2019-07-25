@@ -63,6 +63,12 @@ $ totp config reset
 $ totp --secret seed
 ```
 
+**Continuous code output** can be generated with the `--follow` option.
+
+```
+$ totp --follow mysecretname
+```
+
 **For help** on any of the above, use the `--help` option. Examples are
 
 ```
@@ -104,7 +110,13 @@ $ totp --time 2019-06-01T20:00:00-05:00 --forward 30s --secret seed
 820148
 ```
 
-## Using the Sdio Option
+The `--follow` option is also compatible with the time machine.
+
+```
+$ totp --time 2001-10-31T20:00:00-05:00 --follow --secret seed
+```
+
+## Using the Stdio Option
 
 If storing secrets in the clear isn't ideal for you, `totp` supports streaming the shared secret collection through stdin and stdout with the `--stdio` option. This allows you to roll your own encryption or support other methods of maintaining shared secrets.
 
