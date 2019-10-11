@@ -1,6 +1,6 @@
 # TOTP
 
-It's a time-based one-time password (TOTP) code generator.
+A time-based one-time password (TOTP) code generator written in Go. Basically a command-line interface that's [Google Authenticator](https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&hl=en_US) or [Authy](https://authy.com/) for your Windows, macOS, or Linux machine.
 
 [![Build Status](https://travis-ci.com/arcanericky/totp.svg?branch=master)](https://travis-ci.com/arcanericky/totp)
 [![codecov](https://codecov.io/gh/arcanericky/totp/branch/master/graph/badge.svg)](https://codecov.io/gh/arcanericky/totp)
@@ -8,7 +8,7 @@ It's a time-based one-time password (TOTP) code generator.
 
 ## What it Does
 
-It generates TOTP codes used for two-factor authentication at sites such as Google, GitHub, Dropbox, and AWS.
+It generates TOTP codes used for two-factor authentication at sites such as Google, GitHub, Dropbox, PayPal, Amazon, and many more.
 
 **Warning**
 Every copy of your two-factor credentials increases your risk profile. Using this utility is no exception. This utility will store your TOTP secrets unencrypted on your filesystem. The only protection offered is to store these secrets in a file readable by only your user and protected by the operating system only.
