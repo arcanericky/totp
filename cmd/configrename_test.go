@@ -8,7 +8,7 @@ import (
 )
 
 func TestConfigRename(t *testing.T) {
-	collectionFile.filename = "testcollection"
+	collectionFile.filename = "testcollection.json"
 
 	secrets := createTestData(t)
 

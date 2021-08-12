@@ -6,7 +6,7 @@ import (
 )
 
 func TestConfigReset(t *testing.T) {
-	collectionFile.filename = "testcollection"
+	collectionFile.filename = "testcollection.json"
 
 	createTestData(t)
 

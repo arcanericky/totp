@@ -11,10 +11,10 @@ import (
 	"github.com/pquerna/otp/totp"
 )
 
-var errSecretNotFound = errors.New("Secret not found")
-var errNoFilename = errors.New("No save target")
-var errSecretNameEmpty = errors.New("Secret name empty")
-var errSecretValueEmpty = errors.New("Secret value empty")
+var errSecretNotFound = errors.New("secret not found")
+var errNoFilename = errors.New("no save target")
+var errSecretNameEmpty = errors.New("secret name empty")
+var errSecretValueEmpty = errors.New("secret value empty")
 
 // Secret is a struct containing data necessary for working with secrets,
 // namely, the name of the secret name and the secret value
@@ -77,7 +77,7 @@ func (c *Collection) DeleteSecret(name string) (Secret, error) {
 
 	retSecret, ok := c.Secrets[name]
 
-	if ok == true {
+	if ok {
 		delete(c.Secrets, name)
 	} else {
 		err = errSecretNotFound
@@ -101,7 +101,7 @@ func (c *Collection) UpdateSecret(name, value string) (Secret, error) {
 		_, err = totp.GenerateCode(value, time.Now())
 		if err == nil {
 			retSecret, ok = c.Secrets[name]
-			if ok == true {
+			if ok {
 				retSecret.Value = value
 				retSecret.DateModified = time.Now()
 				c.Secrets[name] = retSecret
@@ -125,7 +125,7 @@ func (c *Collection) RenameSecret(oldName, newName string) (Secret, error) {
 
 	if len(newName) != 0 {
 		retSecret, ok = c.Secrets[oldName]
-		if ok == true {
+		if ok {
 			retSecret.Name = newName
 			retSecret.DateModified = time.Now()
 			c.Secrets[newName] = retSecret
@@ -145,7 +145,7 @@ func (c *Collection) GetSecret(name string) (Secret, error) {
 	var err error
 
 	retSecret, ok := c.Secrets[name]
-	if ok == false {
+	if !ok {
 		err = errSecretNotFound
 	}
 
@@ -236,7 +236,7 @@ func NewCollectionWithFile(filename string) (*Collection, error) {
 	if err == nil {
 		c, err = NewCollectionWithReader(f)
 	}
-
+	f.Close()
 	c.filename = filename
 
 	return c, err

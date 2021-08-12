@@ -36,7 +36,7 @@ func TestWriteProtected(t *testing.T) {
 	secret.Value = updatedValue
 
 	// Validate secret returned on update can't be changed
-	secret, err = s.GetSecret(secretName)
+	secret, _ = s.GetSecret(secretName)
 	if secret.Name != secretName || secret.Value != secretValue {
 		t.Error("Internal collection secret can be updated with returned secret from UpdateSecret()")
 	}
@@ -46,12 +46,12 @@ func TestSettingsNew(t *testing.T) {
 	collectionFile := "testcollection.json"
 
 	// Test failure on Reader interface
-	c, err := NewCollectionWithReader(os.Stdout)
+	_, err := NewCollectionWithReader(os.Stdout)
 	if err == nil {
 		t.Error("New collection should fail with os.Stdout as reader")
 	}
 
-	c = NewCollection()
+	c := NewCollection()
 
 	// Test error on Save with no filename, no writer
 	err = c.Save()
