@@ -1,0 +1,32 @@
+on: [push, pull_request]
+name: Build
+jobs:
+  test:
+    strategy:
+      matrix:
+        go-version: [1.16.x]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Code format
+        run: diff -u <(echo -n) <(gofmt -d -s .)
+      - name: Vet
+        run: go vet ./...
+      - name: Unit tests
+        run: go test -race -coverprofile=coverage.out ./...
+      - name: Function coverage
+        run: go tool cover "-func=coverage.out"
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v2
+        with:
+          file: ./coverage.out
+      - name: Build and Execute
+        run: |
+          go build -o totp-test -ldflags "-X main.version=$(./scripts/get-version.sh)" ./totp/...
+          ./totp-test --help

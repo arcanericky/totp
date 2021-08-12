@@ -23,7 +23,7 @@ func (f flagValue) String() string {
 }
 
 func TestRoot(t *testing.T) {
-	collectionFile.filename = "testcollection"
+	collectionFile.filename = "testcollection.json"
 
 	secretList := createTestData(t)
 

@@ -2,7 +2,7 @@
 
 A time-based one-time password (TOTP) code generator written in Go. Basically a command-line interface that's [Google Authenticator](https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&hl=en_US) or [Authy](https://authy.com/) for your Windows, macOS, or Linux machine.
 
-[![Build Status](https://travis-ci.com/arcanericky/totp.svg?branch=master)](https://travis-ci.com/arcanericky/totp)
+[![Build](https://github.com/arcanericky/totp/actions/workflows/builder.yml/badge.svg?branch=master)](https://github.com/arcanericky/totp/actions/workflows/builder.yml)
 [![codecov](https://codecov.io/gh/arcanericky/totp/branch/master/graph/badge.svg)](https://codecov.io/gh/arcanericky/totp)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
@@ -17,69 +17,69 @@ Every copy of your two-factor credentials increases your risk profile. Using thi
 
 **Add TOTP secrets** to the TOTP configuration file with the `config add` option, specifying the name and secret value. Note the secret names are **case sensitive**.
 
-```
-$ totp config add mysecretname seed
+```sh
+totp config add mysecretname seed
 ```
 
 **Generate TOTP codes** using the `totp` command to specify the secret name. Note that because `totp` reserves the use of the words `config` and `version`, don't use them to name a secret.
 
-```
-$ totp mysecretname
+```sh
+totp mysecretname
 ```
 
 **List the secret entries** with the `config list` command.
 
-```
-$ totp config list
+```sh
+totp config list
 ```
 
 **Update secret entries** using the `config update` command. Note that `config update` and `config add` are actually the same command and can be used interchangeably.
 
-```
-$ totp config update mysecretname newseed
+```sh
+totp config update mysecretname newseed
 ```
 
 **Rename the secret entries** with the `config rename` command
 
-```
-$ totp config rename mysecretname mynewname
+```sh
+totp config rename mysecretname mynewname
 ```
 
 **Delete secret entries** with the `config delete` command
 
-```
-$ totp config delete mynewname
+```sh
+totp config delete mynewname
 ```
 
 **Remove all the secrets** and start over using the `config reset` command
 
-```
-$ totp config reset
+```sh
+totp config reset
 ```
 
 **Use an ad-hoc secret** to generate a code by using the `--secret` option
 
-```
-$ totp --secret seed
+```sh
+totp --secret seed
 ```
 
 **Continuous code output** can be generated with the `--follow` option.
 
-```
-$ totp --follow mysecretname
+```sh
+totp --follow mysecretname
 ```
 
 **For help** on any of the above, use the `--help` option. Examples are
 
-```
-$ totp --help
-$ totp config --help
+```sh
+totp --help
+totp config --help
 ```
 
 **Bash completion** can be enabled by using `config completion`.
 
-```
-$ . <(totp config completion)
+```sh
+. <(totp config completion)
 ```
 
 ## Using the Time Machine
@@ -90,7 +90,7 @@ The `--time` option takes an [RFC3339 formatted time string](https://tools.ietf.
 
 Examples with `--time`:
 
-```
+```sh
 $ date '+%FT%T%:z'
 2019-06-01T19:58:47-05:00
 $ totp --time $(date '+%FT%T%:z') --secret seed
@@ -103,7 +103,7 @@ The `--forward` and `--backward` options move the current time forward and backw
 
 Examples with `--forward` and `--backward`
 
-```
+```sh
 $ totp --time 2019-06-01T20:00:00-05:00 --backward 3m --secret seed
 222296
 $ totp --time 2019-06-01T20:00:00-05:00 --forward 30s --secret seed
@@ -112,8 +112,8 @@ $ totp --time 2019-06-01T20:00:00-05:00 --forward 30s --secret seed
 
 The `--follow` option is also compatible with the time machine.
 
-```
-$ totp --time 2001-10-31T20:00:00-05:00 --follow --secret seed
+```sh
+totp --time 2001-10-31T20:00:00-05:00 --follow --secret seed
 ```
 
 ## Using the Stdio Option
@@ -129,19 +129,19 @@ Note the `--file` option can achieve the same results as this example. This is m
 
 Create a collection
 
-```
+```sh
 totp config add --stdio secretname myvalue < /dev/null > totp.json
 ```
 
 View the collection
 
-```
+```sh
 totp config list --stdio < totp.json
 ```
 
 Generate a TOTP code
 
-```
+```sh
 totp secretname --stdio < totp.json
 ```
 
@@ -150,21 +150,22 @@ totp secretname --stdio < totp.json
 Using what was learned above, a contrived example for encrypting data with [GnuPG](https://gnupg.org/) follows.
 
 Create an encrypted collection
-```
+
+```sh
 totp config add --stdio secretname myvalue < /dev/null | \
   gpg --batch --yes --passphrase mypassphrase --output totp-collection.gpg --symmetric
 ```
 
 View the collection
 
-```
+```sh
 gpg --quiet --batch --passphrase mypassphrase --decrypt totp-collection.gpg | \
   totp config list --stdio
 ```
 
 Add another secret
 
-```
+```sh
 gpg --quiet --batch --passphrase mypassphrase --decrypt totp-collection.gpg | \
   totp config add  --stdio newname newvalue | \
   gpg --batch --yes --passphrase mypassphrase --output totp-collection.gpg --symmetric
@@ -172,14 +173,14 @@ gpg --quiet --batch --passphrase mypassphrase --decrypt totp-collection.gpg | \
 
 View the modified collection
 
-```
+```sh
 gpg --quiet --batch --passphrase mypassphrase --decrypt totp-collection.gpg | \
   totp config list --stdio
 ```
 
 Generate a TOTP code
 
-```
+```sh
 gpg --quiet --batch --passphrase mypassphrase --decrypt totp-collection.gpg | totp --stdio secretname
 ```
 
@@ -189,28 +190,28 @@ gpg --quiet --batch --passphrase mypassphrase --decrypt totp-collection.gpg | to
 
 To build everything:
 
-```
-$ git clone https://github.com/arcanericky/totp.git
-$ cd totp
-$ make
+```sh
+git clone https://github.com/arcanericky/totp.git
+cd totp
+make
 ```
 
 For unit tests and code coverage reports:
 
-```
-$ make test
+```sh
+make test
 ```
 
 The coverage is output to `coverage.html`. Load it in browser for review. For example:
 
-```
-$ /opt/google/chrome/chrome file://$PWD/coverage.html
+```sh
+/opt/google/chrome/chrome file://$PWD/coverage.html
 ```
 
 To build for a single platform (see the `Makefile` for the different targets)
 
-```
-$ make linux-amd64
+```sh
+make linux-amd64
 ```
 
 See the `Makefile` for how to use the `go` command natively.
@@ -227,4 +228,4 @@ My [ga-cmd project](https://github.com/arcanericky/ga-cmd) is more popular than 
 
 ## Credits
 
-This utility uses the [otp package by pquerna](https://github.com/pquerna/otp). Without this library, I probably woudn't have bothered creating this.
+This utility uses the [otp package by pquerna](https://github.com/pquerna/otp). Without this library, I probably wouldn't have bothered creating this.

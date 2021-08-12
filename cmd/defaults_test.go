@@ -3,7 +3,6 @@ package cmd
 import (
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 )
 
@@ -14,7 +13,7 @@ func TestDefaults(t *testing.T) {
 		t.Error("Windows collection file not set properly")
 	}
 
-	setCollectionFile(runtime.GOOS)
+	setCollectionFile("linux")
 	if collectionFile.filename != filepath.Join(os.Getenv("HOME"), "."+defaultBaseCollectionFile) {
 		t.Error("Runtime OS collection file not set properly")
 	}

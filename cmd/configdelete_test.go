@@ -8,7 +8,7 @@ import (
 )
 
 func TestConfigDelete(t *testing.T) {
-	collectionFile.filename = "testcollection"
+	collectionFile.filename = "testcollection.json"
 
 	secretList := createTestData(t)
 
