@@ -18,7 +18,7 @@ WINDOWS_386=$(WINDOWS)-386.exe
 LINUX_ARM32=$(LINUX)-arm
 LINUX_ARM64=$(LINUX)-arm64
 
-all: linux-amd64 windows-amd64 darwin-amd64 linux-arm
+all: linux-amd64 windows-amd64 darwin-amd64 linux-arm linux-arm64
 
 linux-amd64: $(LINUX_AMD64)
 
