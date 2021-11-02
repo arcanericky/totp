@@ -1,4 +1,6 @@
-.vscode
-bin
+.vscode/
+bin/
 coverage.*
 settings.json
+dist/
+
