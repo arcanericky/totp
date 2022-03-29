@@ -1,6 +1,6 @@
 module github.com/arcanericky/totp
 
-go 1.16
+go 1.18
 
 require (
 	github.com/boombuler/barcode v1.0.1 // indirect
