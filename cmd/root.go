@@ -143,6 +143,32 @@ var rootCmd = &cobra.Command{
 			generateCodesService(codeTime.Sub(time.Now())-backward+forward, 0, 30*time.Second, time.Sleep, secretName, secret)
 		}
 	},
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) != 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		return getSecretNamesForCompletion(toComplete), cobra.ShellCompDirectiveNoFileComp
+	},
+}
+
+func getSecretNamesForCompletion(toComplete string) []string {
+	var secretNames []string
+	var err error
+	var c *api.Collection
+
+	c, err = collectionFile.loader()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error loading collection", err)
+	} else {
+		secrets := c.GetSecrets()
+		for _, s := range secrets {
+			if strings.HasPrefix(s.Name, toComplete) {
+				secretNames = append(secretNames, s.Name)
+			}
+		}
+	}
+
+	return secretNames
 }
 
 func generateCode(name string, secret string, t time.Time) error {
