@@ -44,9 +44,18 @@ func TestRoot(t *testing.T) {
 	generateCodesService = savedGenerateCodesService
 	rootCmd.Flags().Lookup(optionFollow).Value.Set("false")
 
+	// Completion
+	rootCmd.ValidArgsFunction(rootCmd, []string{}, "na")
+
+	// Completion with args
+	rootCmd.ValidArgsFunction(rootCmd, []string{"secret"}, "na")
+
 	// No collections file
 	os.Remove(collectionFile.filename)
 	rootCmd.Run(rootCmd, []string{secretList[0].name})
+
+	// Completion without collections
+	rootCmd.ValidArgsFunction(rootCmd, []string{}, "na")
 
 	// Excessive args
 	rootCmd.Run(rootCmd, []string{"secretname", "extraarg"})
