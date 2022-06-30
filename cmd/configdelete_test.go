@@ -8,9 +8,12 @@ import (
 )
 
 func TestConfigDelete(t *testing.T) {
+	defaults()
 	collectionFile.filename = "testcollection.json"
 
 	secretList := createTestData(t)
+
+	configDeleteCmd := getConfigDeleteCmd()
 
 	// Secret does not exit
 	configDeleteCmd.Run(nil, []string{"secret"})

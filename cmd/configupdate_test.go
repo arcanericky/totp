@@ -12,6 +12,8 @@ func TestConfigUpdate(t *testing.T) {
 
 	createTestData(t)
 
+	configUpdateCmd := getConfigUpdateCmd(getRootCmd())
+
 	// Valid parameters
 	secretName := "testsecret"
 	configUpdateCmd.Run(nil, []string{secretName, "seed"})
@@ -39,7 +41,7 @@ func TestConfigUpdate(t *testing.T) {
 	}
 
 	// Test using secret named 'config'
-	secretName = configCmd.Use
+	secretName = "config"
 	configUpdateCmd.Run(nil, []string{secretName, "seed"})
 	c, err = totp.NewCollectionWithFile(collectionFile.filename)
 	if err != nil {
@@ -48,7 +50,7 @@ func TestConfigUpdate(t *testing.T) {
 
 	secret, err = c.GetSecret(secretName)
 	if err == nil {
-		t.Error("Secret named \"" + configCmd.Use + "\" should not have been saved")
+		t.Error("Secret named \"" + secretName + "\" should not have been saved")
 	}
 
 	// No parameters passed

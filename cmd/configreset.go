@@ -7,20 +7,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var configResetCmd = &cobra.Command{
-	Use:   "reset",
-	Short: "Reset the TOTP colllection",
-	Long:  "Reset the TOTP colllection",
-	Run: func(cmd *cobra.Command, args []string) {
-		configReset()
-	},
-}
-
 func configReset() {
-	os.Remove(collectionFile.filename)
+	if err := os.Remove(collectionFile.filename); err != nil {
+		fmt.Println("Error removing collection file:", err)
+		return
+	}
+
 	fmt.Println("Collection file removed")
 }
 
-func init() {
-	configCmd.AddCommand(configResetCmd)
+func getConfigResetCmd() *cobra.Command {
+	var cobraCmd = &cobra.Command{
+		Use:   "reset",
+		Short: "Reset the TOTP colllection",
+		Long:  "Reset the TOTP colllection",
+		Run: func(_ *cobra.Command, _ []string) {
+			configReset()
+		},
+	}
+
+	return cobraCmd
 }

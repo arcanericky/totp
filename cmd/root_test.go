@@ -23,9 +23,12 @@ func (f flagValue) String() string {
 }
 
 func TestRoot(t *testing.T) {
+	Execute()
 	collectionFile.filename = "testcollection.json"
 
 	secretList := createTestData(t)
+
+	rootCmd := getRootCmd()
 
 	// No parameters
 	rootCmd.Run(rootCmd, []string{})
@@ -39,10 +42,10 @@ func TestRoot(t *testing.T) {
 	// Test follow condition
 	savedGenerateCodesService := generateCodesService
 	generateCodesService = func(time.Duration, time.Duration, time.Duration, func(time.Duration), string, string) {}
-	rootCmd.Flags().Lookup(optionFollow).Value.Set("true")
+	_ = rootCmd.Flags().Lookup(optionFollow).Value.Set("true")
 	rootCmd.Run(rootCmd, []string{"name0"})
 	generateCodesService = savedGenerateCodesService
-	rootCmd.Flags().Lookup(optionFollow).Value.Set("false")
+	_ = rootCmd.Flags().Lookup(optionFollow).Value.Set("false")
 
 	// Completion
 	rootCmd.ValidArgsFunction(rootCmd, []string{}, "na")
@@ -61,38 +64,38 @@ func TestRoot(t *testing.T) {
 	rootCmd.Run(rootCmd, []string{"secretname", "extraarg"})
 
 	// Provide secret option
-	rootCmd.Flags().Set(optionSecret, "seed")
+	_ = rootCmd.Flags().Set(optionSecret, "seed")
 	rootCmd.Run(rootCmd, []string{})
 
 	// Provide invalid secret option
-	rootCmd.Flags().Set(optionSecret, "seed1")
+	_ = rootCmd.Flags().Set(optionSecret, "seed1")
 	rootCmd.Run(rootCmd, []string{})
 
 	// File option
-	rootCmd.Flags().Set(optionFile, collectionFile.filename)
+	_ = rootCmd.Flags().Set(optionFile, collectionFile.filename)
 	rootCmd.Flags().Lookup(optionFile).Changed = true
 	rootCmd.PersistentPreRun(rootCmd, []string{"secret"})
 
 	// Stdio option
-	rootCmd.Flags().Set(optionStdio, "true")
+	_ = rootCmd.Flags().Set(optionStdio, "true")
 	rootCmd.PersistentPreRun(rootCmd, []string{"secret"})
 	collectionFile.loader = loadCollectionFromDefaultFile
 	collectionFile.useStdio = false
-	rootCmd.Flags().Set(optionStdio, "")
+	_ = rootCmd.Flags().Set(optionStdio, "")
 
 	// Time option
-	rootCmd.Flags().Set(optionTime, "2019-06-01T20:00:00-05:00")
+	_ = rootCmd.Flags().Set(optionTime, "2019-06-01T20:00:00-05:00")
 	rootCmd.Run(rootCmd, []string{})
 
 	// Give secret and secret name
-	rootCmd.Flags().Set(optionSecret, "seed")
+	_ = rootCmd.Flags().Set(optionSecret, "seed")
 	rootCmd.Run(rootCmd, []string{"secretname"})
-	rootCmd.Flags().Set(optionSecret, "")
+	_ = rootCmd.Flags().Set(optionSecret, "")
 
 	// Invalid time option
-	rootCmd.Flags().Set(optionTime, "invalidtime")
+	_ = rootCmd.Flags().Set(optionTime, "invalidtime")
 	rootCmd.Run(rootCmd, []string{})
-	rootCmd.Flags().Set(optionTime, "")
+	_ = rootCmd.Flags().Set(optionTime, "")
 
 	var f *pflag.Flag
 	var savedFlagValue pflag.Value
@@ -146,12 +149,6 @@ func TestRoot(t *testing.T) {
 	f.Value = new(flagValue)
 	rootCmd.Run(rootCmd, []string{})
 	f.Value = savedFlagValue
-
-	Execute()
-	savedArgs := os.Args
-	os.Args = []string{"totp", "--invalidoption"}
-	Execute()
-	os.Args = savedArgs
 }
 
 func TestExecOnInterval(t *testing.T) {

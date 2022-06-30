@@ -5,5 +5,6 @@ import (
 )
 
 func TestVersion(t *testing.T) {
+	versionCmd := getVersionCmd()
 	versionCmd.Run(nil, []string{})
 }

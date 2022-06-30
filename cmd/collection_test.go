@@ -33,7 +33,7 @@ func createTestData(t *testing.T) []secretItem {
 		}
 	}
 
-	c.Save()
+	_ = c.Save()
 
 	return secretList
 }

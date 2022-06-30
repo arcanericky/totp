@@ -9,7 +9,7 @@ func TestConfigReset(t *testing.T) {
 	collectionFile.filename = "testcollection.json"
 
 	createTestData(t)
-
+	configResetCmd := getConfigResetCmd()
 	configResetCmd.Run(nil, []string{})
 
 	_, err := os.Stat(collectionFile.filename)
