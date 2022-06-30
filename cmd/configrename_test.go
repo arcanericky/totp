@@ -12,6 +12,8 @@ func TestConfigRename(t *testing.T) {
 
 	secrets := createTestData(t)
 
+	configRenameCmd := getConfigRenameCmd(getRootCmd())
+
 	configRenameCmd.Run(nil, []string{})
 
 	// Valid parameters
@@ -28,15 +30,16 @@ func TestConfigRename(t *testing.T) {
 	}
 
 	// Test rename to config
-	configRenameCmd.Run(nil, []string{newName, configCmd.Use})
+	configCmdUse := "config"
+	configRenameCmd.Run(nil, []string{newName, configCmdUse})
 	c, err = totp.NewCollectionWithFile(collectionFile.filename)
 	if err != nil {
 		t.Error("Could not load collection for rename test from file")
 	}
 
-	_, err = c.GetSecret(configCmd.Use)
+	_, err = c.GetSecret(configCmdUse)
 	if err == nil {
-		t.Error("Secret should not have been renamed to \"" + configCmd.Use + "\"")
+		t.Error("Secret should not have been renamed to \"" + configCmdUse + "\"")
 	}
 
 	// No collections file

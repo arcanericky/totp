@@ -19,7 +19,7 @@ func TestDefaults(t *testing.T) {
 	}
 
 	// Not sure how to unit test but at least run it for now
-	loadCollectionFromStdin()
+	_, _ = loadCollectionFromStdin()
 
 	for _, c := range reservedCommands {
 		if isReservedCommand(c) != true {

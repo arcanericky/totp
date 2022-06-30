@@ -1,6 +1,6 @@
 # TOTP
 
-A time-based one-time password (TOTP) code generator written in Go. Basically a command-line interface that's [Google Authenticator](https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&hl=en_US) or [Authy](https://authy.com/) for your Windows, macOS, or Linux machine.
+A time-based one-time password (TOTP) code generator written in Go. A command-line interface that's like [Google Authenticator](https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&hl=en_US) or [Authy](https://authy.com/) for your Windows, macOS, or Linux machine.
 
 [![Build](https://github.com/arcanericky/totp/actions/workflows/builder.yml/badge.svg?branch=master)](https://github.com/arcanericky/totp/actions/workflows/builder.yml)
 [![codecov](https://codecov.io/gh/arcanericky/totp/branch/master/graph/badge.svg)](https://codecov.io/gh/arcanericky/totp)
@@ -13,7 +13,7 @@ It generates TOTP codes used for two-factor authentication at sites such as Goog
 **Warning**
 Every copy of your two-factor credentials increases your risk profile. Using this utility is no exception. This utility will store your TOTP secrets unencrypted on your filesystem. The only protection offered is to store these secrets in a file readable by only your user and protected by the operating system only.
 
-## How to Use
+## Quick Start
 
 **Add TOTP secrets** to the TOTP configuration file with the `config add` option, specifying the name and secret value. Note the secret names are **case sensitive**.
 
@@ -21,7 +21,7 @@ Every copy of your two-factor credentials increases your risk profile. Using thi
 totp config add mysecretname seed
 ```
 
-**Generate TOTP codes** using the `totp` command to specify the secret name. Note that because `totp` reserves the use of the words `config` and `version`, don't use them to name a secret.
+**Generate TOTP codes** using the `totp` command to specify the secret name. Note that because `totp` reserves the use of the words `config` and `version` for commands, don't use them to name a secret. If you've generated and installed `totp` completions for for your shell, pressing tab on a partially completed secret name will trigger autocomplete.
 
 ```sh
 totp mysecretname
@@ -32,6 +32,8 @@ totp mysecretname
 ```sh
 totp config list
 ```
+
+Aliases are `ls` and `l`.
 
 **Update secret entries** using the `config update` command. Note that `config update` and `config add` are actually the same command and can be used interchangeably.
 
@@ -45,11 +47,15 @@ totp config update mysecretname newseed
 totp config rename mysecretname mynewname
 ```
 
+Aliases are `ren` and `mv`.
+
 **Delete secret entries** with the `config delete` command
 
 ```sh
 totp config delete mynewname
 ```
+
+Aliases are `remove`, `erase`, `rm`, and `del`.
 
 **Remove all the secrets** and start over using the `config reset` command
 
@@ -84,9 +90,9 @@ totp config --help
 
 ## Using the Time Machine
 
-`totp` has the `--time`, `--forward`, and `--backward` options that are used to manipulate the time for which the TOTP code is generated. This is useful if `totp` is being used on a machine with the incorrect time.
+`totp` implements the `--time`, `--forward`, and `--backward` options to manipulate the time for which the TOTP code is generated. This is useful if `totp` is being used on a machine with the incorrect time.
 
-The `--time` option takes an [RFC3339 formatted time string](https://tools.ietf.org/html/rfc3339) as its argument and uses it to generate the TOTP code. Note that the `--forward` and `--backward` options will modify this option value.
+The `--time` option takes an [RFC3339 formatted time string](https://tools.ietf.org/html/rfc3339) as its argument and uses it to generate the TOTP code. Note that the `--forward` and `--backward` options will internally modify this option value.
 
 Examples with `--time`:
 
@@ -114,6 +120,8 @@ The `--follow` option is also compatible with the time machine.
 
 ```sh
 totp --time 2001-10-31T20:00:00-05:00 --follow --secret seed
+877737
+208737
 ```
 
 ## Using the Stdio Option
@@ -123,7 +131,7 @@ If storing secrets in the clear isn't ideal for you, `totp` supports streaming t
 The `totp <secret name>` and `totp config list` commands support loading the collection via standard input. The 
 `totp config update`, `totp config delete`, and `totp config rename` commands support loading via standard input and sending the modified collection to standard output. Experiment with the `--stdio` option to observe how this works.
 
-**Learning with Cleartext Data**
+### Learning with Plaintext Data
 
 Note the `--file` option can achieve the same results as this example. This is meant to teach how stdio works with `totp`.
 
@@ -145,7 +153,7 @@ Generate a TOTP code
 totp secretname --stdio < totp.json
 ```
 
-**Encrypting Shared Secret Collection**
+### Encrypting Shared Secret Collection
 
 Using what was learned above, a contrived example for encrypting data with [GnuPG](https://gnupg.org/) follows.
 
@@ -186,7 +194,7 @@ gpg --quiet --batch --passphrase mypassphrase --decrypt totp-collection.gpg | to
 
 ## Building
 
-`totp` is mostly developed using Go 1.12.x on Debian based systems. Only `go` is required but to use the automated actions the `Makefile` provides, `make` must be installed.
+`totp` is mostly developed using Go 1.18.x on Debian based systems. Only `go` is required but to use the automated actions the `Makefile` provides, `make` must be installed.
 
 To build everything:
 
@@ -228,4 +236,4 @@ My [ga-cmd project](https://github.com/arcanericky/ga-cmd) is more popular than 
 
 ## Credits
 
-This utility uses the [otp package by pquerna](https://github.com/pquerna/otp). Without this library, I probably wouldn't have bothered creating this.
+This utility uses the [otp package by pquerna](https://github.com/pquerna/otp). Without this library, I probably wouldn't have bothered creating this front-end.

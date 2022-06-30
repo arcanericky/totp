@@ -4,12 +4,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var configCmd = &cobra.Command{
-	Use:   "config",
-	Short: "Configure totp",
-	Long:  `Configure totp`,
-}
+func getConfigCmd(rootCmd *cobra.Command) *cobra.Command {
+	var cobraCmd = &cobra.Command{
+		Use:   cmdConfig,
+		Short: "Configure totp",
+		Long:  `Configure totp`,
+	}
 
-func init() {
-	rootCmd.AddCommand(configCmd)
+	cobraCmd.AddCommand(getConfigListCmd())
+	cobraCmd.AddCommand(getConfigRenameCmd(rootCmd))
+	cobraCmd.AddCommand(getConfigUpdateCmd(rootCmd))
+	cobraCmd.AddCommand(getConfigDeleteCmd())
+	cobraCmd.AddCommand(getConfigCompletionCmd(rootCmd))
+	cobraCmd.AddCommand(getConfigResetCmd())
+
+	return cobraCmd
 }

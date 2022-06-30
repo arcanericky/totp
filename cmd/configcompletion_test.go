@@ -5,5 +5,6 @@ import (
 )
 
 func TestConfigCompletion(t *testing.T) {
+	completionCmd := getConfigCompletionCmd(getRootCmd())
 	completionCmd.Run(nil, []string{})
 }

@@ -4,30 +4,38 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"io/ioutil"
 	"os"
 	"time"
 
 	"github.com/pquerna/otp/totp"
 )
 
-var errSecretNotFound = errors.New("secret not found")
-var errNoFilename = errors.New("no save target")
-var errSecretNameEmpty = errors.New("secret name empty")
-var errSecretValueEmpty = errors.New("secret value empty")
+var ErrSecretNotFound = errors.New("secret not found")
+var ErrNoFilename = errors.New("no save target")
+var ErrSecretNameEmpty = errors.New("secret name empty")
+var ErrSecretValueEmpty = errors.New("secret value empty")
 
 // Secret is a struct containing data necessary for working with secrets,
 // namely, the name of the secret name and the secret value
 type Secret struct {
-	DateAdded    time.Time
+	// DateAdded is the date a secret was added to the collection
+	DateAdded time.Time
+
+	// DateModified is the date a secret was last modified
 	DateModified time.Time
-	Name         string
-	Value        string
+
+	// Name is the name of the secret used for retrieval
+	Name string
+
+	// Value is the secret (seed) value
+	Value string
 }
 
 // Collection is a struct that holds TOTP data
 type Collection struct {
-	Secrets  map[string]Secret
+	// Secrets is a map of secrets using the secret name as the key
+	Secrets map[string]Secret
+
 	filename string
 	writer   io.Writer
 }
@@ -46,32 +54,24 @@ type CollectionInterface interface {
 // a file
 func (c *Collection) Save() error {
 	var err error
-	var writerErr error
 
 	serializedSettings, err := c.Serialize()
+	if err != nil {
+		return err
+	}
 
-	if err == nil {
-		if c.writer == nil && len(c.filename) == 0 {
-			err = errNoFilename
-		}
-
-		if c.writer != nil {
-			_, writerErr = c.writer.Write(serializedSettings)
-		}
-
-		if len(c.filename) != 0 {
-			err = ioutil.WriteFile(c.filename, serializedSettings, 0600)
-		}
-
-		if err == nil {
-			err = writerErr
-		}
+	if c.writer != nil {
+		_, err = c.writer.Write(serializedSettings)
+	} else if len(c.filename) != 0 {
+		err = os.WriteFile(c.filename, serializedSettings, 0600)
+	} else {
+		err = ErrNoFilename
 	}
 
 	return err
 }
 
-// DeleteSecret deletes an Entry by name
+// DeleteSecret deletes an entry by name
 func (c *Collection) DeleteSecret(name string) (Secret, error) {
 	var err error
 
@@ -80,13 +80,13 @@ func (c *Collection) DeleteSecret(name string) (Secret, error) {
 	if ok {
 		delete(c.Secrets, name)
 	} else {
-		err = errSecretNotFound
+		err = ErrSecretNotFound
 	}
 
 	return retSecret, err
 }
 
-// UpdateSecret updates (if it exists) or adds a new Entry with the
+// UpdateSecret updates (if it exists) or adds a new entry with the
 // name and value given
 func (c *Collection) UpdateSecret(name, value string) (Secret, error) {
 	var retSecret Secret
@@ -94,24 +94,33 @@ func (c *Collection) UpdateSecret(name, value string) (Secret, error) {
 	var ok bool
 
 	if len(name) == 0 {
-		err = errSecretNameEmpty
-	} else if len(value) == 0 {
-		err = errSecretValueEmpty
+		return retSecret, ErrSecretNameEmpty
+	}
+
+	if len(value) == 0 {
+		return retSecret, ErrSecretValueEmpty
+	}
+
+	_, err = totp.GenerateCode(value, time.Now())
+	if err != nil {
+		return retSecret, err
+	}
+
+	retSecret, ok = c.Secrets[name]
+	if ok {
+		retSecret.Value = value
+		retSecret.DateModified = time.Now()
+		c.Secrets[name] = retSecret
 	} else {
-		_, err = totp.GenerateCode(value, time.Now())
-		if err == nil {
-			retSecret, ok = c.Secrets[name]
-			if ok {
-				retSecret.Value = value
-				retSecret.DateModified = time.Now()
-				c.Secrets[name] = retSecret
-			} else {
-				dateAdded := time.Now()
-				newSecret := Secret{Name: name, Value: value, DateAdded: dateAdded, DateModified: dateAdded}
-				c.Secrets[name] = newSecret
-				retSecret = newSecret
-			}
+		dateAdded := time.Now()
+		newSecret := Secret{
+			Name:         name,
+			Value:        value,
+			DateAdded:    dateAdded,
+			DateModified: dateAdded,
 		}
+		c.Secrets[name] = newSecret
+		retSecret = newSecret
 	}
 
 	return retSecret, err
@@ -123,30 +132,30 @@ func (c *Collection) RenameSecret(oldName, newName string) (Secret, error) {
 	var ok bool
 	var err error
 
-	if len(newName) != 0 {
-		retSecret, ok = c.Secrets[oldName]
-		if ok {
-			retSecret.Name = newName
-			retSecret.DateModified = time.Now()
-			c.Secrets[newName] = retSecret
-			delete(c.Secrets, oldName)
-		} else {
-			err = errSecretNotFound
-		}
-	} else {
-		err = errSecretNameEmpty
+	if len(newName) == 0 {
+		return retSecret, ErrSecretNameEmpty
 	}
+
+	retSecret, ok = c.Secrets[oldName]
+	if !ok {
+		return retSecret, ErrSecretNotFound
+	}
+
+	retSecret.Name = newName
+	retSecret.DateModified = time.Now()
+	c.Secrets[newName] = retSecret
+	delete(c.Secrets, oldName)
 
 	return retSecret, err
 }
 
-// GetSecret returns an Secret with the name argument
+// GetSecret returns a secret with the name argument
 func (c *Collection) GetSecret(name string) (Secret, error) {
 	var err error
 
 	retSecret, ok := c.Secrets[name]
 	if !ok {
-		err = errSecretNotFound
+		err = ErrSecretNotFound
 	}
 
 	return retSecret, err
@@ -211,14 +220,13 @@ func NewCollection() *Collection {
 // NewCollectionWithData creates a new Collection instance with data from a byte slice
 func NewCollectionWithData(data []byte) (*Collection, error) {
 	c := NewCollection()
-	err := c.Deserialize(data)
 
-	return c, err
+	return c, c.Deserialize(data)
 }
 
 // NewCollectionWithReader creates a new collection from a Reader interface
 func NewCollectionWithReader(reader io.Reader) (*Collection, error) {
-	data, err := ioutil.ReadAll(reader)
+	data, err := io.ReadAll(reader)
 
 	if err != nil {
 		return NewCollection(), err
@@ -227,16 +235,27 @@ func NewCollectionWithReader(reader io.Reader) (*Collection, error) {
 	return NewCollectionWithData(data)
 }
 
-// NewCollectionWithFile creates a new Collection instance with data from a file
-func NewCollectionWithFile(filename string) (*Collection, error) {
-	c := NewCollection()
-
+// NewCollectionWithFile creates a new Collection instance with data from a file.
+// If the file open fails, a new Collection instance is returned along with the
+// file open error, which guarantees a usable but empty collection is returned.
+//
+// Returning data to be used along with an error is bad design but changing this
+// would be a breaking API change.
+func NewCollectionWithFile(filename string) (c *Collection, err error) {
 	f, err := os.Open(filename)
-
-	if err == nil {
-		c, err = NewCollectionWithReader(f)
+	if err != nil {
+		c := NewCollection()
+		c.filename = filename
+		return c, err
 	}
-	f.Close()
+
+	defer func() {
+		if e := f.Close(); e != nil && err == nil {
+			err = e
+		}
+	}()
+
+	c, err = NewCollectionWithReader(f)
 	c.filename = filename
 
 	return c, err

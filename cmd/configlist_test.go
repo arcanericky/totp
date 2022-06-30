@@ -10,9 +10,11 @@ func TestConfigList(t *testing.T) {
 
 	createTestData(t)
 
+	configListCmd := getConfigListCmd()
+
 	configListCmd.Run(configListCmd, []string{})
 
-	configListCmd.Flags().Set("names", "true")
+	_ = configListCmd.Flags().Set("names", "true")
 	configListCmd.Run(configListCmd, []string{})
 
 	configListCmd.ResetFlags()

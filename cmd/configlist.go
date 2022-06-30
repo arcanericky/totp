@@ -9,15 +9,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var configListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List secrets",
-	Long:  `List secrets`,
-	Run: func(cmd *cobra.Command, args []string) {
-		listSecrets(cmd)
-	},
-}
-
 func titleLine(len int) string {
 	var builder strings.Builder
 	builder.Grow(len)
@@ -73,25 +64,36 @@ func listSecrets(cmd *cobra.Command) {
 	c, err := collectionFile.loader()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error loading collection", err)
+		return
+	}
+
+	names, err := cmd.Flags().GetBool("names")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error getting names option", err)
+		return
+	}
+
+	secrets := c.GetSecrets()
+
+	if names {
+		listSecretNames(secrets)
 	} else {
-		names, err := cmd.Flags().GetBool("names")
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Error getting names option", err)
-			return
-		}
-
-		secrets := c.GetSecrets()
-
-		if names == true {
-			listSecretNames(secrets)
-		} else {
-			listAllInfo(secrets)
-		}
+		listAllInfo(secrets)
 	}
 }
 
-func init() {
-	configCmd.AddCommand(configListCmd)
-	configListCmd.Flags().BoolP("names", "n", false, "list only secret names")
-	configListCmd.Flags().BoolP(optionStdio, "", false, "load data from stdin")
+func getConfigListCmd() *cobra.Command {
+	var cobraCmd = &cobra.Command{
+		Use:     "list",
+		Aliases: []string{"ls", "l"},
+		Short:   "List secrets",
+		Long:    `List secrets`,
+		Run: func(listCmd *cobra.Command, _ []string) {
+			listSecrets(listCmd)
+		},
+	}
+
+	cobraCmd.Flags().BoolP("names", "n", false, "list only secret names")
+	cobraCmd.Flags().BoolP(optionStdio, "", false, "load data from stdin")
+	return cobraCmd
 }

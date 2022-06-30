@@ -8,7 +8,12 @@ import (
 	"github.com/arcanericky/totp"
 )
 
-const defaultBaseCollectionFile = "totp-config.json"
+const (
+	defaultBaseCollectionFile = "totp-config.json"
+
+	cmdVersion = "version"
+	cmdConfig  = "config"
+)
 
 var collectionFile struct {
 	filename string
@@ -35,7 +40,7 @@ func setCollectionFile(goos string) {
 	}
 }
 
-var reservedCommands = []string{configCmd.Use, versionCmd.Use}
+var reservedCommands = []string{cmdConfig, cmdVersion}
 
 func isReservedCommand(name string) bool {
 	for _, c := range reservedCommands {
@@ -47,7 +52,7 @@ func isReservedCommand(name string) bool {
 	return false
 }
 
-func init() {
+func defaults() {
 	setCollectionFile(runtime.GOOS)
 	collectionFile.loader = loadCollectionFromDefaultFile
 }
