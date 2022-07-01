@@ -203,4 +203,6 @@ func TestGenerateCodes(t *testing.T) {
 	var d time.Duration
 	generateCodes(d, 2*time.Millisecond, 1*time.Millisecond,
 		func(d time.Duration) {}, "", "seed")
+	generateCodes(d, 2*time.Millisecond, 1*time.Millisecond,
+		func(d time.Duration) {}, "", "invalidseed")
 }

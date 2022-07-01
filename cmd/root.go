@@ -19,6 +19,7 @@ const (
 	optionSecret   = "secret"
 	optionStdio    = "stdio"
 	optionTime     = "time"
+	optionYes      = "yes"
 )
 
 type generateCodesAPI func(time.Duration, time.Duration, time.Duration, func(time.Duration), string, string)
@@ -29,34 +30,34 @@ func run(cmd *cobra.Command, args []string) {
 	// Process the secret option
 	secret, err := cmd.Flags().GetString(optionSecret)
 	if err != nil {
-		fmt.Println("Error getting secret", err)
+		fmt.Fprintln(os.Stderr, "Error getting secret:", err)
 		return
 	}
 
 	// Process the backward option
 	backward, err := cmd.Flags().GetDuration(optionBackward)
 	if err != nil {
-		fmt.Println("Error processing backward option", err)
+		fmt.Fprintln(os.Stderr, "Error processing backward option:", err)
 		return
 	}
 
 	// Process the forward option
 	forward, err := cmd.Flags().GetDuration(optionForward)
 	if err != nil {
-		fmt.Println("Error processing forward option", err)
+		fmt.Fprintln(os.Stderr, "Error processing forward option:", err)
 		return
 	}
 
 	// Process the time option
 	timeString, err := cmd.Flags().GetString(optionTime)
 	if err != nil {
-		fmt.Println("Error processing time option", err)
+		fmt.Fprintln(os.Stderr, "Error processing time option:", err)
 		return
 	}
 
 	follow, err := cmd.Flags().GetBool(optionFollow)
 	if err != nil {
-		fmt.Println("Error processing follow option", err)
+		fmt.Fprintln(os.Stderr, "Error processing follow option:", err)
 		return
 	}
 
@@ -66,7 +67,7 @@ func run(cmd *cobra.Command, args []string) {
 	if len(timeString) > 0 {
 		codeTime, err = time.Parse(time.RFC3339, timeString)
 		if err != nil {
-			fmt.Println("Error parsing the time option", err)
+			fmt.Fprintln(os.Stderr, "Error parsing the time option:", err)
 			return
 		}
 	} else {
@@ -107,7 +108,7 @@ func run(cmd *cobra.Command, args []string) {
 
 	// If here then a stored shared secret is wanted
 	if err := generateCode(secretName, secret, codeTime.Add(forward-backward)); err != nil {
-		fmt.Fprintln(os.Stderr, "Error generating code:", err)
+		// generateCode will output error text
 		return
 	}
 
@@ -123,7 +124,7 @@ func getSecretNamesForCompletion(toComplete string) []string {
 
 	c, err = collectionFile.loader()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error loading collection", err)
+		fmt.Fprintln(os.Stderr, "Error loading collection:", err)
 	} else {
 		secrets := c.GetSecrets()
 		for _, s := range secrets {
@@ -147,12 +148,12 @@ func generateCode(name string, secret string, t time.Time) error {
 		c, err = collectionFile.loader()
 
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Error loading collection", err)
+			fmt.Fprintln(os.Stderr, "Error loading collection:", err)
 		} else {
 			code, err = c.GenerateCodeWithTime(name, t)
 
 			if err != nil {
-				fmt.Fprintln(os.Stderr, "Error generating code", err)
+				fmt.Fprintln(os.Stderr, "Error generating code:", err)
 			}
 		}
 	}
@@ -232,7 +233,7 @@ func getRootCmd() *cobra.Command {
 			if cmd.Flags().Changed(optionFile) {
 				cfgFile, err := cmd.Flags().GetString(optionFile)
 				if err != nil {
-					fmt.Println("Error processing collection file option", err)
+					fmt.Println("Error processing collection file option:", err)
 					return
 				}
 
@@ -242,7 +243,7 @@ func getRootCmd() *cobra.Command {
 			if cmd.Flags().Lookup(optionStdio) != nil {
 				useStdio, err := cmd.Flags().GetBool(optionStdio)
 				if err != nil {
-					fmt.Println("Error processing stdio option", err)
+					fmt.Println("Error processing stdio option:", err)
 					return
 				}
 

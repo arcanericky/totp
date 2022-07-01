@@ -7,7 +7,6 @@ import (
 )
 
 func TestDefaults(t *testing.T) {
-	// Doesn't set and check exactly under on Linux but good enough for test
 	setCollectionFile("windows")
 	if collectionFile.filename != filepath.Join(os.Getenv("LOCALAPPDATA"), defaultBaseCollectionFile) {
 		t.Error("Windows collection file not set properly")
@@ -16,6 +15,12 @@ func TestDefaults(t *testing.T) {
 	setCollectionFile("linux")
 	if collectionFile.filename != filepath.Join(os.Getenv("HOME"), "."+defaultBaseCollectionFile) {
 		t.Error("Runtime OS collection file not set properly")
+	}
+
+	os.Setenv("TOTP_FILE", "testcollectionfile.json")
+	setCollectionFile("windows")
+	if collectionFile.filename != os.Getenv("TOTP_FILE") {
+		t.Error("Collection file not set properly with environment variable")
 	}
 
 	// Not sure how to unit test but at least run it for now
