@@ -173,14 +173,13 @@ func (c *Collection) GetSecrets() []Secret {
 
 // GenerateCodeWithTime creates a TOTP code with the named secret's value
 func (c *Collection) GenerateCodeWithTime(name string, time time.Time) (string, error) {
-	var code string
-
 	secret, err := c.GetSecret(name)
-	if err == nil {
-		code, err = totp.GenerateCode(secret.Value, time)
+	if err != nil {
+		return "", err
 	}
 
-	return code, err
+	return totp.GenerateCode(secret.Value, time)
+
 }
 
 // GenerateCode creates a TOTP code with the named secret's value
@@ -227,7 +226,6 @@ func NewCollectionWithData(data []byte) (*Collection, error) {
 // NewCollectionWithReader creates a new collection from a Reader interface
 func NewCollectionWithReader(reader io.Reader) (*Collection, error) {
 	data, err := io.ReadAll(reader)
-
 	if err != nil {
 		return NewCollection(), err
 	}

@@ -1,30 +1,49 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 )
 
-func configReset() {
-	if err := os.Remove(collectionFile.filename); err != nil {
-		fmt.Println("Error removing collection file:", err)
-		return
+func configReset(filename string) error {
+	if err := os.Remove(filename); err != nil {
+		fmt.Fprintf(os.Stderr, "Error removing collection file %s: %s\n", filename, err)
+		return err
 	}
 
-	fmt.Println("Collection file removed")
+	fmt.Printf("Collection file %s removed\n", filename)
+	return nil
 }
 
 func getConfigResetCmd() *cobra.Command {
+	var confirmAll bool
+
 	var cobraCmd = &cobra.Command{
 		Use:   "reset",
 		Short: "Reset the TOTP colllection",
 		Long:  "Reset the TOTP colllection",
 		Run: func(_ *cobra.Command, _ []string) {
-			configReset()
+			if !confirmAll {
+				confirm, err := userConfirm(bufio.NewReader(os.Stdin), "This will remove all secrets.")
+				if err != nil {
+					fmt.Fprintln(os.Stderr, "Error getting response:", err)
+					return
+				}
+
+				if !confirm {
+					fmt.Println("Skipping reset")
+					return
+				}
+			}
+
+			_ = configReset(collectionFile.filename)
 		},
 	}
+
+	cobraCmd.Flags().BoolVarP(&confirmAll, optionYes, "y", false, "confirm all prompts")
 
 	return cobraCmd
 }

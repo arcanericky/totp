@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 
@@ -31,6 +32,8 @@ func deleteSecret(name string) {
 }
 
 func getConfigDeleteCmd() *cobra.Command {
+	var confirmAll bool
+
 	var cobraCmd = &cobra.Command{
 		Use:     "delete",
 		Aliases: []string{"remove", "erase", "rm", "del"},
@@ -42,10 +45,28 @@ func getConfigDeleteCmd() *cobra.Command {
 				return
 			}
 
-			deleteSecret(args[0])
+			secretName := args[0]
+
+			if !confirmAll {
+				confirm, err := userConfirm(bufio.NewReader(os.Stdin),
+					fmt.Sprintf("This will delete secret %s.", secretName))
+				if err != nil {
+					fmt.Fprintln(os.Stderr, "Error getting response:", err)
+					return
+				}
+
+				if !confirm {
+					fmt.Println("Skipping delete")
+					return
+				}
+			}
+
+			deleteSecret(secretName)
 		},
 	}
 
 	cobraCmd.Flags().BoolP(optionStdio, "", false, "load with stdin, save with stdout")
+	cobraCmd.Flags().BoolVarP(&confirmAll, optionYes, "y", false, "confirm all prompts")
+
 	return cobraCmd
 }

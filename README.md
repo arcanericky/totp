@@ -88,6 +88,10 @@ totp config --help
 . <(totp config completion)
 ```
 
+## TOTP Data Location
+
+The location for saved data is extracted from the `LOCALAPPDATA` environment variable in Windows and the `HOME` environment for Linux/MacOS and in the file `totp-config.json`. This can be customized using the `--file` option or by setting the `TOTP_FILE` environment variable.
+
 ## Using the Time Machine
 
 `totp` implements the `--time`, `--forward`, and `--backward` options to manipulate the time for which the TOTP code is generated. This is useful if `totp` is being used on a machine with the incorrect time.

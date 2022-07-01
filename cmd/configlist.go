@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/arcanericky/totp"
@@ -60,20 +61,17 @@ func listAllInfo(secrets []totp.Secret) {
 	}
 }
 
-func listSecrets(cmd *cobra.Command) {
+func listSecrets(names bool) {
 	c, err := collectionFile.loader()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error loading collection", err)
 		return
 	}
 
-	names, err := cmd.Flags().GetBool("names")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error getting names option", err)
-		return
-	}
-
 	secrets := c.GetSecrets()
+	sort.Slice(secrets, func(i, j int) bool {
+		return secrets[i].Name < secrets[j].Name
+	})
 
 	if names {
 		listSecretNames(secrets)
@@ -83,17 +81,20 @@ func listSecrets(cmd *cobra.Command) {
 }
 
 func getConfigListCmd() *cobra.Command {
+	var names bool
+
 	var cobraCmd = &cobra.Command{
 		Use:     "list",
 		Aliases: []string{"ls", "l"},
 		Short:   "List secrets",
 		Long:    `List secrets`,
 		Run: func(listCmd *cobra.Command, _ []string) {
-			listSecrets(listCmd)
+			listSecrets(names)
 		},
 	}
 
-	cobraCmd.Flags().BoolP("names", "n", false, "list only secret names")
+	cobraCmd.Flags().BoolVarP(&names, "names", "n", false, "list only secret names")
 	cobraCmd.Flags().BoolP(optionStdio, "", false, "load data from stdin")
+
 	return cobraCmd
 }

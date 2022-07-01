@@ -33,11 +33,17 @@ func loadCollectionFromDefaultFile() (*totp.Collection, error) {
 }
 
 func setCollectionFile(goos string) {
+	if totpFile := os.Getenv("TOTP_FILE"); totpFile != "" {
+		collectionFile.filename = totpFile
+		return
+	}
+
 	if goos == "windows" {
 		collectionFile.filename = filepath.Join(os.Getenv("LOCALAPPDATA"), defaultBaseCollectionFile)
-	} else {
-		collectionFile.filename = filepath.Join(os.Getenv("HOME"), "."+defaultBaseCollectionFile)
+		return
 	}
+
+	collectionFile.filename = filepath.Join(os.Getenv("HOME"), "."+defaultBaseCollectionFile)
 }
 
 var reservedCommands = []string{cmdConfig, cmdVersion}

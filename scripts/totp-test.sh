@@ -59,7 +59,7 @@ fi
 ((TEST_NBR++))
 echo "${TEST_NBR}: Testing config reset"
 touch ${COLLECTION}
-${TOTP} config reset --file ${COLLECTION}
+${TOTP} config reset --file ${COLLECTION} --yes
 if test -f "${COLLECTION}"; then
     echo "FAIL: ${TEST_NBR}. Collection file not removed"
     exit 1
@@ -171,7 +171,7 @@ fi
 ENTRY=newentryname
 
 echo "${TEST_NBR}: Testing config delete"
-${TOTP} config delete --file ${COLLECTION} ${ENTRY}
+${TOTP} config delete --file ${COLLECTION} --yes ${ENTRY}
 RESULT=$(${TOTP} config list --file ${COLLECTION} | wc -l)
 echo "Result: ${RESULT}"
 if [[ ! ${RESULT} =~ ^2 ]]; then
@@ -180,7 +180,7 @@ if [[ ! ${RESULT} =~ ^2 ]]; then
 fi
 
 echo "Removing ${COLLECTION}"
-${TOTP} config reset --file ${COLLECTION}
+${TOTP} config reset --file ${COLLECTION} --yes
 echo "Removing ${TOTP}"
 rm ${TOTP}
 
