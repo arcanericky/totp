@@ -10,7 +10,7 @@ func TestConfigReset(t *testing.T) {
 
 	createTestData(t)
 	configResetCmd := getConfigResetCmd()
-	configResetCmd.Flags().Set(optionYes, "true")
+	_ = configResetCmd.Flags().Set(optionYes, "true")
 	configResetCmd.Run(nil, []string{})
 
 	_, err := os.Stat(collectionFile.filename)

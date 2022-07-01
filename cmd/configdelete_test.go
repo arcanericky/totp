@@ -16,7 +16,7 @@ func TestConfigDelete(t *testing.T) {
 	configDeleteCmd := getConfigDeleteCmd()
 	configDeleteCmd.Run(nil, []string{"secret"})
 
-	configDeleteCmd.Flags().Set(optionYes, "true")
+	_ = configDeleteCmd.Flags().Set(optionYes, "true")
 
 	// Secret does not exit
 	configDeleteCmd.Run(nil, []string{"secret"})
