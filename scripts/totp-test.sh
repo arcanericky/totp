@@ -8,7 +8,7 @@ TEST_NBR=1
 
 # Build
 echo "Building ${TOTP}"
-go build -o ${TOTP} -ldflags "-X main.version=$(./scripts/get-version.sh)" ./totp/...
+go build -o ${TOTP} -ldflags "-X main.version=$(./scripts/get-version.sh)" ./cmd/...
 
 # Basic commands
 echo "${TEST_NBR}: Testing basic commands"
