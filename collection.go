@@ -53,8 +53,6 @@ type CollectionInterface interface {
 // Save serializes (marshals) the Collections struct and writes it to
 // a file
 func (c *Collection) Save() error {
-	var err error
-
 	serializedSettings, err := c.Serialize()
 	if err != nil {
 		return err
@@ -73,54 +71,48 @@ func (c *Collection) Save() error {
 
 // DeleteSecret deletes an entry by name
 func (c *Collection) DeleteSecret(name string) (Secret, error) {
-	var err error
-
 	retSecret, ok := c.Secrets[name]
-
-	if ok {
-		delete(c.Secrets, name)
-	} else {
-		err = ErrSecretNotFound
+	if !ok {
+		return Secret{}, ErrSecretNotFound
 	}
 
-	return retSecret, err
+	delete(c.Secrets, name)
+
+	return retSecret, nil
 }
 
 // UpdateSecret updates (if it exists) or adds a new entry with the
 // name and value given
 func (c *Collection) UpdateSecret(name, value string) (Secret, error) {
-	var retSecret Secret
-	var err error
-	var ok bool
-
 	if len(name) == 0 {
-		return retSecret, ErrSecretNameEmpty
+		return Secret{}, ErrSecretNameEmpty
 	}
 
 	if len(value) == 0 {
-		return retSecret, ErrSecretValueEmpty
+		return Secret{}, ErrSecretValueEmpty
 	}
 
-	_, err = totp.GenerateCode(value, time.Now())
+	_, err := totp.GenerateCode(value, time.Now())
 	if err != nil {
-		return retSecret, err
+		return Secret{}, err
 	}
 
-	retSecret, ok = c.Secrets[name]
+	retSecret, ok := c.Secrets[name]
 	if ok {
+		// entry indicates an update
 		retSecret.Value = value
 		retSecret.DateModified = time.Now()
 		c.Secrets[name] = retSecret
 	} else {
+		// no entry indicates an add
 		dateAdded := time.Now()
-		newSecret := Secret{
+		retSecret = Secret{
 			Name:         name,
 			Value:        value,
 			DateAdded:    dateAdded,
 			DateModified: dateAdded,
 		}
-		c.Secrets[name] = newSecret
-		retSecret = newSecret
+		c.Secrets[name] = retSecret
 	}
 
 	return retSecret, err
@@ -128,17 +120,13 @@ func (c *Collection) UpdateSecret(name, value string) (Secret, error) {
 
 // RenameSecret renames a secret
 func (c *Collection) RenameSecret(oldName, newName string) (Secret, error) {
-	var retSecret Secret
-	var ok bool
-	var err error
-
 	if len(newName) == 0 {
-		return retSecret, ErrSecretNameEmpty
+		return Secret{}, ErrSecretNameEmpty
 	}
 
-	retSecret, ok = c.Secrets[oldName]
+	retSecret, ok := c.Secrets[oldName]
 	if !ok {
-		return retSecret, ErrSecretNotFound
+		return Secret{}, ErrSecretNotFound
 	}
 
 	retSecret.Name = newName
@@ -146,19 +134,17 @@ func (c *Collection) RenameSecret(oldName, newName string) (Secret, error) {
 	c.Secrets[newName] = retSecret
 	delete(c.Secrets, oldName)
 
-	return retSecret, err
+	return retSecret, nil
 }
 
 // GetSecret returns a secret with the name argument
 func (c *Collection) GetSecret(name string) (Secret, error) {
-	var err error
-
 	retSecret, ok := c.Secrets[name]
 	if !ok {
-		err = ErrSecretNotFound
+		return Secret{}, ErrSecretNotFound
 	}
 
-	return retSecret, err
+	return retSecret, nil
 }
 
 // GetSecrets returns a slice containing all the secrets
