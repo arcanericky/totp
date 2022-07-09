@@ -41,16 +41,11 @@ func updateSecret(name, value string) {
 
 func getConfigUpdateCmd(rootCmd *cobra.Command) *cobra.Command {
 	var cobraCmd = &cobra.Command{
-		Use:     "update",
-		Aliases: []string{"add"},
-		Short:   "Add or update a secret",
-		Long:    `Add or update a secret`,
-		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-			if len(args) != 0 {
-				return nil, cobra.ShellCompDirectiveNoFileComp
-			}
-			return getSecretNamesForCompletion(toComplete), cobra.ShellCompDirectiveNoFileComp
-		},
+		Use:               "update",
+		Aliases:           []string{"add"},
+		Short:             "Add or update a secret",
+		Long:              `Add or update a secret`,
+		ValidArgsFunction: validArgs,
 		Run: func(_ *cobra.Command, args []string) {
 			if len(args) != 2 {
 				fmt.Fprintln(os.Stderr, "Must provide name and secret")
