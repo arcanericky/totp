@@ -41,10 +41,11 @@ func updateSecret(name, value string) {
 
 func getConfigUpdateCmd(rootCmd *cobra.Command) *cobra.Command {
 	var cobraCmd = &cobra.Command{
-		Use:     "update",
-		Aliases: []string{"add"},
-		Short:   "Add or update a secret",
-		Long:    `Add or update a secret`,
+		Use:               "update",
+		Aliases:           []string{"add"},
+		Short:             "Add or update a secret",
+		Long:              `Add or update a secret`,
+		ValidArgsFunction: validArgs,
 		Run: func(_ *cobra.Command, args []string) {
 			if len(args) != 2 {
 				fmt.Fprintln(os.Stderr, "Must provide name and secret")

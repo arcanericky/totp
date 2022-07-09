@@ -221,6 +221,13 @@ func run(cmd *cobra.Command, args []string, cfg runVars) {
 	}
 }
 
+func validArgs(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	if len(args) != 0 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+	return getSecretNamesForCompletion(toComplete), cobra.ShellCompDirectiveNoFileComp
+}
+
 func getRootCmd() *cobra.Command {
 	var cfg runVars
 
@@ -241,12 +248,7 @@ func getRootCmd() *cobra.Command {
 				}
 			}
 		},
-		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-			if len(args) != 0 {
-				return nil, cobra.ShellCompDirectiveNoFileComp
-			}
-			return getSecretNamesForCompletion(toComplete), cobra.ShellCompDirectiveNoFileComp
-		},
+		ValidArgsFunction: validArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			run(cmd, args, cfg)
 		},

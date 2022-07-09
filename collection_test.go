@@ -505,7 +505,7 @@ func TestCollection_UpdateSecret(t *testing.T) {
 			},
 			want: Secret{
 				Name:  "newname",
-				Value: "seed",
+				Value: "SEED",
 			},
 			wantErr: false,
 		},
@@ -526,7 +526,7 @@ func TestCollection_UpdateSecret(t *testing.T) {
 			},
 			want: Secret{
 				Name:  "testname",
-				Value: "seed",
+				Value: "SEED",
 			},
 			wantErr: false,
 		},

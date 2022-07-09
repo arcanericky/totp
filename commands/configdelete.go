@@ -35,10 +35,11 @@ func getConfigDeleteCmd() *cobra.Command {
 	var (
 		confirmAll bool
 		cobraCmd   = &cobra.Command{
-			Use:     "delete",
-			Aliases: []string{"remove", "erase", "rm", "del"},
-			Short:   "Delete a secret",
-			Long:    `Delete a secret`,
+			Use:               "delete",
+			Aliases:           []string{"remove", "erase", "rm", "del"},
+			Short:             "Delete a secret",
+			Long:              `Delete a secret`,
+			ValidArgsFunction: validArgs,
 			Run: func(_ *cobra.Command, args []string) {
 				if len(args) != 1 {
 					fmt.Fprintln(os.Stderr, "Must provide a secret name to delete.")

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/pquerna/otp/totp"
@@ -92,6 +93,7 @@ func (c *Collection) UpdateSecret(name, value string) (Secret, error) {
 		return Secret{}, ErrSecretValueEmpty
 	}
 
+	value = strings.ToUpper(value)
 	_, err := totp.GenerateCode(value, time.Now())
 	if err != nil {
 		return Secret{}, err
