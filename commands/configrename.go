@@ -37,6 +37,12 @@ func getConfigRenameCmd(rootCmd *cobra.Command) *cobra.Command {
 		Aliases: []string{"ren", "mv"},
 		Short:   "Rename a secret",
 		Long:    `Rename a secret`,
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			if len(args) != 0 {
+				return nil, cobra.ShellCompDirectiveNoFileComp
+			}
+			return getSecretNamesForCompletion(toComplete), cobra.ShellCompDirectiveNoFileComp
+		},
 		Run: func(_ *cobra.Command, args []string) {
 			if len(args) != 2 {
 				fmt.Fprintln(os.Stderr, "Must provide source and target.")
