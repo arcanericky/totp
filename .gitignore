@@ -5,3 +5,4 @@ cmd/testcollection.json
 coverage.*
 settings.json
 testcollection.json
+totp

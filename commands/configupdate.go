@@ -14,9 +14,10 @@ func updateSecret(name, value string) {
 		return
 	}
 
+	// ignore error because file may not exist
 	s, _ := collectionFile.loader()
-	secret, err := s.UpdateSecret(name, value)
 
+	secret, err := s.UpdateSecret(name, value)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error updating secret:", err)
 		return

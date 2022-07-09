@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ const (
 	optionFile     = "file"
 	optionFollow   = "follow"
 	optionForward  = "forward"
+	optionQr       = "qrcode"
 	optionSecret   = "secret"
 	optionStdio    = "stdio"
 	optionTime     = "time"
@@ -24,103 +26,25 @@ const (
 
 type generateCodesAPI func(time.Duration, time.Duration, time.Duration, func(time.Duration), string, string)
 
-var generateCodesService generateCodesAPI
-
-func run(cmd *cobra.Command, args []string) {
-	// Process the secret option
-	secret, err := cmd.Flags().GetString(optionSecret)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error getting secret:", err)
-		return
-	}
-
-	// Process the backward option
-	backward, err := cmd.Flags().GetDuration(optionBackward)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error processing backward option:", err)
-		return
-	}
-
-	// Process the forward option
-	forward, err := cmd.Flags().GetDuration(optionForward)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error processing forward option:", err)
-		return
-	}
-
-	// Process the time option
-	timeString, err := cmd.Flags().GetString(optionTime)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error processing time option:", err)
-		return
-	}
-
-	follow, err := cmd.Flags().GetBool(optionFollow)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error processing follow option:", err)
-		return
-	}
-
-	var codeTime time.Time
-
-	// Override if time was given
-	if len(timeString) > 0 {
-		codeTime, err = time.Parse(time.RFC3339, timeString)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Error parsing the time option:", err)
-			return
-		}
-	} else {
-		codeTime = time.Now()
-		// codeOffset is 0
-	}
-
-	secretLen := len(secret)
-	argsLen := len(args)
-
-	errMsg := ""
-	switch {
-	// No secret, no secret name
-	case secretLen == 0 && argsLen == 0:
-		errMsg = "Secret name or secret is required."
-	// Secret given but additional arguments were also given
-	case secretLen > 0 && argsLen > 0:
-		errMsg = "Secret was given so additional arguments are not needed."
-	// No secret given and too many args
-	case secretLen == 0 && argsLen > 1:
-		errMsg = "Too many arguments. Only one secret name is required."
-	}
-
-	if errMsg != "" {
-		fmt.Fprintf(os.Stderr, errMsg+"\n\n")
-		if err := cmd.Help(); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-		}
-
-		return
-	}
-
-	// Load the secret name
-	secretName := ""
-	if argsLen == 1 {
-		secretName = args[0]
-	}
-
-	// If here then a stored shared secret is wanted
-	if err := generateCode(secretName, secret, codeTime.Add(forward-backward)); err != nil {
-		// generateCode will output error text
-		return
-	}
-
-	if follow {
-		generateCodesService(time.Until(codeTime)-backward+forward, 0, 30*time.Second, time.Sleep, secretName, secret)
-	}
+type runVars struct {
+	secret     string
+	backward   time.Duration
+	forward    time.Duration
+	timeString string
+	follow     bool
+	useStdio   bool
+	cfgFile    string
+	qr         bool
 }
 
+var generateCodesService generateCodesAPI
+
 func getSecretNamesForCompletion(toComplete string) []string {
-	var secretNames []string
-	var err error
-	var c *api.Collection
+	var (
+		secretNames []string
+		err         error
+		c           *api.Collection
+	)
 
 	c, err = collectionFile.loader()
 	if err != nil {
@@ -137,32 +61,35 @@ func getSecretNamesForCompletion(toComplete string) []string {
 	return secretNames
 }
 
-func generateCode(name string, secret string, t time.Time) error {
-	var code string
-	var err error
-	var c *api.Collection
-
+func generateCode(writer io.Writer, name string, secret string, t time.Time) error {
+	const errGen = "Error generating code:"
 	if len(secret) != 0 {
-		code, err = totp.GenerateCode(secret, t)
-	} else {
-		c, err = collectionFile.loader()
-
+		code, err := totp.GenerateCode(secret, t)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Error loading collection:", err)
-		} else {
-			code, err = c.GenerateCodeWithTime(name, t)
-
-			if err != nil {
-				fmt.Fprintln(os.Stderr, "Error generating code:", err)
-			}
+			fmt.Fprintln(os.Stderr, errGen, err)
+			return err
 		}
+
+		fmt.Fprintln(writer, code)
+
+		return nil
 	}
 
-	if err == nil {
-		fmt.Println(code)
+	c, err := collectionFile.loader()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error loading collection:", err)
+		return err
 	}
 
-	return err
+	code, err := c.GenerateCodeWithTime(name, t)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errGen, err)
+		return err
+	}
+
+	fmt.Fprintln(writer, code)
+
+	return nil
 }
 
 func durationToNextInterval(now time.Time) time.Duration {
@@ -215,7 +142,7 @@ func generateCodes(timeOffset time.Duration, durationToRun time.Duration, interv
 
 	callOnInterval(durationToRun, intervalTime,
 		func() bool {
-			if err := generateCode(secretName, secret, time.Now().Add(timeOffset)); err != nil {
+			if err := generateCode(os.Stdout, secretName, secret, time.Now().Add(timeOffset)); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				return true
 			}
@@ -223,7 +150,80 @@ func generateCodes(timeOffset time.Duration, durationToRun time.Duration, interv
 		})
 }
 
+func run(cmd *cobra.Command, args []string, cfg runVars) {
+	// var err error
+
+	secretLen := len(cfg.secret)
+	argsLen := len(args)
+
+	errMsg := ""
+	switch {
+	// No secret, no secret name
+	case secretLen == 0 && argsLen == 0:
+		errMsg = "Secret name or secret is required."
+	// Secret given but additional arguments were also given
+	case !cfg.qr && secretLen > 0 && argsLen > 0:
+		errMsg = "Secret was given so additional arguments are not needed."
+	// No secret given and too many args
+	case secretLen == 0 && argsLen > 1:
+		errMsg = "Too many arguments. Only one secret name is required."
+	}
+
+	if errMsg != "" {
+		fmt.Fprintf(os.Stderr, errMsg+"\n\n")
+		if err := cmd.Help(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+
+		return
+	}
+
+	if cfg.qr {
+		secretName := ""
+		if argsLen == 1 {
+			secretName = args[0]
+		}
+
+		_ = qrCode(os.Stdout, secretName, cfg.secret)
+		return
+	}
+
+	// Override if time was given
+	var (
+		codeTime time.Time
+		err      error
+	)
+	if len(cfg.timeString) > 0 {
+		codeTime, err = time.Parse(time.RFC3339, cfg.timeString)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Error parsing the time option:", err)
+			return
+		}
+	} else {
+		codeTime = time.Now()
+		// codeOffset is 0
+	}
+
+	// Load the secret name
+	secretName := ""
+	if argsLen == 1 {
+		secretName = args[0]
+	}
+
+	// If here then a stored shared secret is wanted
+	if err := generateCode(os.Stdout, secretName, cfg.secret, codeTime.Add(cfg.forward-cfg.backward)); err != nil {
+		// generateCode will output error text
+		return
+	}
+
+	if cfg.follow {
+		generateCodesService(time.Until(codeTime)-cfg.backward+cfg.forward, 0, 30*time.Second, time.Sleep, secretName, cfg.secret)
+	}
+}
+
 func getRootCmd() *cobra.Command {
+	var cfg runVars
+
 	var cobraCmd = &cobra.Command{
 		Use:   "totp",
 		Short: "TOTP Generator",
@@ -231,23 +231,11 @@ func getRootCmd() *cobra.Command {
 		Args:  cobra.ArbitraryArgs,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if cmd.Flags().Changed(optionFile) {
-				cfgFile, err := cmd.Flags().GetString(optionFile)
-				if err != nil {
-					fmt.Println("Error processing collection file option:", err)
-					return
-				}
-
-				collectionFile.filename = cfgFile
+				collectionFile.filename = cfg.cfgFile
 			}
 
 			if cmd.Flags().Lookup(optionStdio) != nil {
-				useStdio, err := cmd.Flags().GetBool(optionStdio)
-				if err != nil {
-					fmt.Println("Error processing stdio option:", err)
-					return
-				}
-
-				if useStdio {
+				if cfg.useStdio {
 					collectionFile.loader = loadCollectionFromStdin
 					collectionFile.useStdio = true
 				}
@@ -259,21 +247,24 @@ func getRootCmd() *cobra.Command {
 			}
 			return getSecretNamesForCompletion(toComplete), cobra.ShellCompDirectiveNoFileComp
 		},
-		Run: run,
+		Run: func(cmd *cobra.Command, args []string) {
+			run(cmd, args, cfg)
+		},
 	}
 
 	var duration time.Duration
 
 	generateCodesService = generateCodes
 
-	cobraCmd.PersistentFlags().StringP(optionFile, "f", "", "secret collection file")
+	cobraCmd.PersistentFlags().StringVarP(&cfg.cfgFile, optionFile, "f", "", "secret collection file")
 
-	cobraCmd.Flags().StringP(optionSecret, "s", "", "TOTP secret value")
-	cobraCmd.Flags().BoolP(optionStdio, "", false, "load with stdin")
-	cobraCmd.Flags().StringP(optionTime, "", "", "RFC3339 time for TOTP (2019-06-23T20:00:00-05:00)")
-	cobraCmd.Flags().DurationP(optionBackward, "", duration, "move time backward (ex. \"30s\")")
-	cobraCmd.Flags().DurationP(optionForward, "", duration, "move time forward (ex. \"1m\")")
-	cobraCmd.Flags().BoolP(optionFollow, "", false, "continuous output")
+	cobraCmd.Flags().StringVarP(&cfg.secret, optionSecret, "s", "", "TOTP secret value")
+	cobraCmd.Flags().BoolVarP(&cfg.useStdio, optionStdio, "", false, "load with stdin")
+	cobraCmd.Flags().StringVarP(&cfg.timeString, optionTime, "", "", "RFC3339 time for TOTP (2019-06-23T20:00:00-05:00)")
+	cobraCmd.Flags().DurationVarP(&cfg.backward, optionBackward, "", duration, "move time backward (ex. \"30s\")")
+	cobraCmd.Flags().DurationVarP(&cfg.forward, optionForward, "", duration, "move time forward (ex. \"1m\")")
+	cobraCmd.Flags().BoolVarP(&cfg.follow, optionFollow, "", false, "continuous output")
+	cobraCmd.Flags().BoolVarP(&cfg.qr, optionQr, "", false, "output QR code")
 
 	cobraCmd.SetUsageTemplate(strings.Replace(cobraCmd.UsageTemplate(), "{{.UseLine}}", "{{.UseLine}}\n  {{.CommandPath}} [secret name]", 1))
 
