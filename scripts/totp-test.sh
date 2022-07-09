@@ -32,7 +32,7 @@ if [[ ! ${RESULT} = "Secret name or secret is required." ]]; then
 fi
 
 # Test secret was given so additional arguments are not needed
-RESULT=$(${TOTP} --secret seed additional arguments 2>&1 | head --lines=1)
+RESULT=$(${TOTP} --secret SEED additional arguments 2>&1 | head --lines=1)
 echo "Result: ${RESULT}"
 if [[ ! ${RESULT} = "Secret was given so additional arguments are not needed." ]]; then
     echo "FAIL: Secret was given so additional arguments are not needed"
@@ -48,9 +48,9 @@ if [[ ! ${RESULT} = "Too many arguments. Only one secret name is required." ]]; 
 fi
 
 # Test completion output
-RESULT=$(${TOTP} config completion | head --lines=1)
+RESULT=$(${TOTP} completion bash | head --lines=1)
 echo "Result: ${RESULT}"
-if [[ ! ${RESULT} = "# bash completion for totp                                 -*- shell-script -*-" ]]; then
+if [[ ! ${RESULT} = "# bash completion V2 for totp                                 -*- shell-script -*-" ]]; then
     echo "FAIL: Completion output"
     exit 1
 fi
@@ -69,7 +69,7 @@ fi
 ((TEST_NBR++))
 echo "${TEST_NBR}: Testing generate TOTP w/ secret on CLI"
 TIME="2019-06-23T20:00:00-05:00"
-SECRET=seed
+SECRET=SEED
 RESULT=$(${TOTP} --time ${TIME} --secret ${SECRET})
 echo "Result: ${RESULT}"
 if [[ ! ${RESULT} =~ ^335072$ ]]; then
@@ -80,11 +80,11 @@ fi
 # Test add secret
 ((TEST_NBR++))
 ENTRY=entryname
-SECRET=seed
+SECRET=SEED
 
 echo "${TEST_NBR}: Testing config update for adding"
 ${TOTP} config update --file ${COLLECTION} ${ENTRY} ${SECRET}
-RESULT=$(${TOTP} config list --file ${COLLECTION} | tail -1)
+RESULT=$(${TOTP} config list --all --file ${COLLECTION} | tail -1)
 echo "Result: ${RESULT}"
 if [[ ! ${RESULT} =~ ^${ENTRY}\ ${SECRET}\  ]]; then
     echo "FAIL: ${TEST_NBR}. Entry not added"
@@ -140,11 +140,11 @@ fi
 # Test update secret
 ((TEST_NBR++))
 ENTRY=entryname
-SECRET=seedseed
+SECRET=SEEDSEED
 
 echo "${TEST_NBR}: Testing config update for updating"
 ${TOTP} config update --file ${COLLECTION} ${ENTRY} ${SECRET}
-RESULT=$(${TOTP} config list --file ${COLLECTION} | tail -1)
+RESULT=$(${TOTP} config list --all --file ${COLLECTION} | tail -1)
 echo "Result: ${RESULT}"
 if [[ ! ${RESULT} =~ ^${ENTRY}\ ${SECRET}\  ]]; then
     echo "FAIL: ${TEST_NBR}. Entry not added"
@@ -155,11 +155,11 @@ fi
 ((TEST_NBR++))
 ENTRY=entryname
 NEWENTRY=newentryname
-SECRET=seedseed
+SECRET=SEEDSEED
 
 echo "${TEST_NBR}: Testing config rename"
 ${TOTP} config rename --file ${COLLECTION} ${ENTRY} ${NEWENTRY}
-RESULT=$(${TOTP} config list --file ${COLLECTION} | tail -1)
+RESULT=$(${TOTP} config list --all --file ${COLLECTION} | tail -1)
 echo "Result: ${RESULT}"
 if [[ ! ${RESULT} =~ ^${NEWENTRY}\ ${SECRET}\  ]]; then
     echo "FAIL: ${TEST_NBR}. Entry not added"

@@ -15,7 +15,6 @@ func getConfigCmd(rootCmd *cobra.Command) *cobra.Command {
 	cobraCmd.AddCommand(getConfigRenameCmd(rootCmd))
 	cobraCmd.AddCommand(getConfigUpdateCmd(rootCmd))
 	cobraCmd.AddCommand(getConfigDeleteCmd())
-	cobraCmd.AddCommand(getConfigCompletionCmd(rootCmd))
 	cobraCmd.AddCommand(getConfigResetCmd())
 
 	return cobraCmd

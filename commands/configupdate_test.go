@@ -28,7 +28,7 @@ func TestConfigUpdate(t *testing.T) {
 	}
 
 	// Test update secret
-	newSecret := "seedseed"
+	newSecret := "SEEDSEED"
 	configUpdateCmd.Run(nil, []string{secretName, newSecret})
 	c, err = totp.NewCollectionWithFile(collectionFile.filename)
 	if err != nil {

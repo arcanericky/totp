@@ -14,6 +14,18 @@ func TestConfigList(t *testing.T) {
 
 	configListCmd.Run(configListCmd, []string{})
 
+	// names only
+	_ = configListCmd.Flags().Set("names", "true")
+	configListCmd.Run(configListCmd, []string{})
+
+	// all
+	configListCmd = getConfigListCmd()
+	_ = configListCmd.Flags().Set("all", "true")
+	configListCmd.Run(configListCmd, []string{})
+
+	// names and all
+	configListCmd = getConfigListCmd()
+	_ = configListCmd.Flags().Set("all", "true")
 	_ = configListCmd.Flags().Set("names", "true")
 	configListCmd.Run(configListCmd, []string{})
 

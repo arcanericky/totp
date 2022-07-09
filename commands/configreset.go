@@ -19,29 +19,30 @@ func configReset(filename string) error {
 }
 
 func getConfigResetCmd() *cobra.Command {
-	var confirmAll bool
+	var (
+		confirmAll bool
+		cobraCmd   = &cobra.Command{
+			Use:   "reset",
+			Short: "Reset the TOTP colllection",
+			Long:  "Reset the TOTP colllection",
+			Run: func(_ *cobra.Command, _ []string) {
+				if !confirmAll {
+					confirm, err := userConfirm(bufio.NewReader(os.Stdin), "This will remove all secrets.")
+					if err != nil {
+						fmt.Fprintln(os.Stderr, "Error getting response:", err)
+						return
+					}
 
-	var cobraCmd = &cobra.Command{
-		Use:   "reset",
-		Short: "Reset the TOTP colllection",
-		Long:  "Reset the TOTP colllection",
-		Run: func(_ *cobra.Command, _ []string) {
-			if !confirmAll {
-				confirm, err := userConfirm(bufio.NewReader(os.Stdin), "This will remove all secrets.")
-				if err != nil {
-					fmt.Fprintln(os.Stderr, "Error getting response:", err)
-					return
+					if !confirm {
+						fmt.Println("Skipping reset")
+						return
+					}
 				}
 
-				if !confirm {
-					fmt.Println("Skipping reset")
-					return
-				}
-			}
-
-			_ = configReset(collectionFile.filename)
-		},
-	}
+				_ = configReset(collectionFile.filename)
+			},
+		}
+	)
 
 	cobraCmd.Flags().BoolVarP(&confirmAll, optionYes, "y", false, "confirm all prompts")
 

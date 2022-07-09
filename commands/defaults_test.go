@@ -17,9 +17,9 @@ func TestDefaults(t *testing.T) {
 		t.Error("Runtime OS collection file not set properly")
 	}
 
-	os.Setenv("TOTP_FILE", "testcollectionfile.json")
+	os.Setenv("TOTP_CONFIG", "testcollectionfile.json")
 	setCollectionFile("windows")
-	if collectionFile.filename != os.Getenv("TOTP_FILE") {
+	if collectionFile.filename != os.Getenv("TOTP_CONFIG") {
 		t.Error("Collection file not set properly with environment variable")
 	}
 

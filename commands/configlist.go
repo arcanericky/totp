@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"sort"
 	"strings"
@@ -21,17 +22,19 @@ func titleLine(len int) string {
 	return builder.String()
 }
 
-func listSecretNames(secrets []totp.Secret) {
+func listSecretNames(writer io.Writer, secrets []totp.Secret) {
 	for _, s := range secrets {
-		fmt.Println(s.Name)
+		fmt.Fprintln(writer, s.Name)
 	}
 }
 
-func listAllInfo(secrets []totp.Secret) {
-	nameTitle := "Name"
-	secretTitle := "Secret"
-	addedDateTitle := "Date Added"
-	modifiedDateTitle := "Date Modified"
+func listInfo(writer io.Writer, secrets []totp.Secret, all bool) {
+	const (
+		nameTitle         = "Name"
+		secretTitle       = "Secret"
+		addedDateTitle    = "Date Added"
+		modifiedDateTitle = "Date Modified"
+	)
 
 	maxNameLen := len(nameTitle)
 	maxSecretLen := len(secretTitle)
@@ -47,21 +50,34 @@ func listAllInfo(secrets []totp.Secret) {
 		}
 	}
 
-	timeFormat := "Jan _2 2006 15:04:05"
+	const timeFormat = "Jan _2 2006 15:04:05"
 	timeFormatLen := len(timeFormat)
 	timeFormatLine := titleLine(len(timeFormat))
-	fmt.Printf("%-*s %-*s %-*s %-*s\n",
+
+	if all {
+		fmt.Fprintf(writer, "%-*s %-*s %-*s %-*s\n",
+			maxNameLen, nameTitle,
+			maxSecretLen, secretTitle,
+			timeFormatLen, addedDateTitle,
+			timeFormatLen, modifiedDateTitle)
+		fmt.Fprintf(writer, "%s %s %s %s\n", titleLine(maxNameLen), titleLine(maxSecretLen), timeFormatLine, timeFormatLine)
+		for _, s := range secrets {
+			fmt.Fprintf(writer, "%-*s %-*s %s %s\n", maxNameLen, s.Name, maxSecretLen, s.Value, s.DateAdded.Format(timeFormat), s.DateModified.Format(timeFormat))
+		}
+		return
+	}
+
+	fmt.Fprintf(writer, "%-*s %-*s %-*s\n",
 		maxNameLen, nameTitle,
-		maxSecretLen, secretTitle,
 		timeFormatLen, addedDateTitle,
 		timeFormatLen, modifiedDateTitle)
-	fmt.Printf("%s %s %s %s\n", titleLine(maxNameLen), titleLine(maxSecretLen), timeFormatLine, timeFormatLine)
+	fmt.Fprintf(writer, "%s %s %s\n", titleLine(maxNameLen), timeFormatLine, timeFormatLine)
 	for _, s := range secrets {
-		fmt.Printf("%-*s %-*s %s %s\n", maxNameLen, s.Name, maxSecretLen, s.Value, s.DateAdded.Format(timeFormat), s.DateModified.Format(timeFormat))
+		fmt.Fprintf(writer, "%-*s %s %s\n", maxNameLen, s.Name, s.DateAdded.Format(timeFormat), s.DateModified.Format(timeFormat))
 	}
 }
 
-func listSecrets(names bool) {
+func listSecrets(names, all bool) {
 	c, err := collectionFile.loader()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error loading collection", err)
@@ -74,26 +90,34 @@ func listSecrets(names bool) {
 	})
 
 	if names {
-		listSecretNames(secrets)
+		listSecretNames(os.Stdout, secrets)
 	} else {
-		listAllInfo(secrets)
+		listInfo(os.Stdout, secrets, all)
 	}
 }
 
 func getConfigListCmd() *cobra.Command {
-	var names bool
-
-	var cobraCmd = &cobra.Command{
-		Use:     "list",
-		Aliases: []string{"ls", "l"},
-		Short:   "List secrets",
-		Long:    `List secrets`,
-		Run: func(listCmd *cobra.Command, _ []string) {
-			listSecrets(names)
-		},
-	}
+	var (
+		names    bool
+		all      bool
+		cobraCmd = &cobra.Command{
+			Use:     "list",
+			Aliases: []string{"ls", "l"},
+			Short:   "List secrets",
+			Long:    `List secrets`,
+			Run: func(listCmd *cobra.Command, _ []string) {
+				if names && all {
+					fmt.Fprintln(os.Stderr, "Only one of --names or --all can be used.")
+					return
+				}
+				listSecrets(names, all)
+			},
+		}
+	)
 
 	cobraCmd.Flags().BoolVarP(&names, "names", "n", false, "list only secret names")
+	cobraCmd.Flags().BoolVarP(&all, "all", "a", false, "list all secret info")
+
 	cobraCmd.Flags().BoolP(optionStdio, "", false, "load data from stdin")
 
 	return cobraCmd

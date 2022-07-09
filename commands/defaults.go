@@ -11,8 +11,9 @@ import (
 const (
 	defaultBaseCollectionFile = "totp-config.json"
 
-	cmdVersion = "version"
-	cmdConfig  = "config"
+	cmdVersion    = "version"
+	cmdConfig     = "config"
+	cmdCompletion = "completion"
 )
 
 var collectionFile struct {
@@ -33,7 +34,7 @@ func loadCollectionFromDefaultFile() (*totp.Collection, error) {
 }
 
 func setCollectionFile(goos string) {
-	if totpFile := os.Getenv("TOTP_FILE"); totpFile != "" {
+	if totpFile := os.Getenv("TOTP_CONFIG"); totpFile != "" {
 		collectionFile.filename = totpFile
 		return
 	}
@@ -46,7 +47,7 @@ func setCollectionFile(goos string) {
 	collectionFile.filename = filepath.Join(os.Getenv("HOME"), "."+defaultBaseCollectionFile)
 }
 
-var reservedCommands = []string{cmdConfig, cmdVersion}
+var reservedCommands = []string{cmdConfig, cmdVersion, cmdCompletion}
 
 func isReservedCommand(name string) bool {
 	for _, c := range reservedCommands {

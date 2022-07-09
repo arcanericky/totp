@@ -82,15 +82,23 @@ totp --help
 totp config --help
 ```
 
-**Bash completion** can be enabled by using `config completion`.
+**Shell completion** can be enabled by using the `completion` command.
+
+Bash
 
 ```sh
-. <(totp config completion)
+. <(totp completion bash)
+```
+
+Powershell
+
+```powershell
+. totp completion powershell | Out-String | Invoke-Expression
 ```
 
 ## TOTP Data Location
 
-The location for saved data is extracted from the `LOCALAPPDATA` environment variable in Windows and the `HOME` environment for Linux/MacOS and in the file `totp-config.json`. This can be customized using the `--file` option or by setting the `TOTP_FILE` environment variable.
+The location for saved data is extracted from the `LOCALAPPDATA` environment variable in Windows and the `HOME` environment for Linux/MacOS and in the file `totp-config.json`. This can be customized using the `--file` option or by setting the `TOTP_CONFIG` environment variable.
 
 ## Using the Time Machine
 
