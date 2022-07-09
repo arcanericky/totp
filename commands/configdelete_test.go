@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"os"
@@ -8,9 +8,15 @@ import (
 )
 
 func TestConfigDelete(t *testing.T) {
+	defaults()
 	collectionFile.filename = "testcollection.json"
 
 	secretList := createTestData(t)
+
+	configDeleteCmd := getConfigDeleteCmd()
+	configDeleteCmd.Run(nil, []string{"secret"})
+
+	_ = configDeleteCmd.Flags().Set(optionYes, "true")
 
 	// Secret does not exit
 	configDeleteCmd.Run(nil, []string{"secret"})

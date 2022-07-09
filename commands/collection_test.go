@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"testing"
@@ -19,11 +19,12 @@ func createTestData(t *testing.T) []secretItem {
 
 	// Create some test data
 	secretList := []secretItem{
-		{name: "name0", value: "seed"},
-		{name: "name1", value: "seed"},
-		{name: "name2", value: "seedseed"},
-		{name: "name3", value: "seed"},
-		{name: "name4", value: "seed"},
+		{name: "name0", value: "SEED"},
+		{name: "name1", value: "SEED"},
+		{name: "name2", value: "SEEDSEED"},
+		{name: "name3", value: "SEED"},
+		{name: "name4", value: "SEED"},
+		{name: "testname", value: "TESTSECRET"},
 	}
 
 	for _, i := range secretList {
@@ -33,7 +34,7 @@ func createTestData(t *testing.T) []secretItem {
 		}
 	}
 
-	c.Save()
+	_ = c.Save()
 
 	return secretList
 }

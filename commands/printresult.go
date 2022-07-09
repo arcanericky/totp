@@ -1,9 +1,9 @@
-package cmd
+package commands
 
 import "fmt"
 
 func printResultf(format string, a ...interface{}) (n int, err error) {
-	if collectionFile.useStdio == false {
+	if !collectionFile.useStdio {
 		return fmt.Printf(format, a...)
 	}
 

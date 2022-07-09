@@ -1,6 +1,8 @@
 .vscode/
 bin/
+dist/
+cmd/testcollection.json
 coverage.*
 settings.json
-dist/
-
+testcollection.json
+totp

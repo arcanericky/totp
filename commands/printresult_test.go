@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 
 func TestPrintResult(t *testing.T) {
 	text := "test text"
-	printResultf(text)
+	_, _ = printResultf(text)
 	collectionFile.useStdio = true
-	printResultf(text)
+	_, _ = printResultf(text)
 }

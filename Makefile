@@ -1,7 +1,7 @@
 VERSION=1.0.0-incubation
 VERSION_INJECT=github.com/arcanericky/totp/cmd.versionText
-SRCS=*.go totp/*.go cmd/*.go
-
+SRCS=*.go cmd/*.go commands/*.go
+MAIN=./cmd/...
 EXECUTABLE=bin/totp
 
 LINUX=$(EXECUTABLE)-linux
@@ -31,23 +31,23 @@ linux-arm: $(LINUX_ARM32)
 linux-arm64: $(LINUX_ARM64)
 
 test:
-	go test -race -coverprofile=coverage.txt -covermode=atomic . ./cmd
+	go test -race -coverprofile=coverage.txt -covermode=atomic . ./commands
 	go tool cover -html=coverage.txt -o coverage.html
 
 $(WINDOWS_AMD64): $(SRCS)
-	GOOS=windows GOARCH=amd64 go build -o $@ -ldflags "-X $(VERSION_INJECT)=$(shell sh scripts/get-version.sh)" github.com/arcanericky/totp/totp
+	GOOS=windows GOARCH=amd64 go build -o $@ -ldflags "-X $(VERSION_INJECT)=$(shell sh scripts/get-version.sh)" $(MAIN)
 
 $(LINUX_AMD64): $(SRCS)
-	GOOS=linux GOARCH=amd64 go build -o $@ -ldflags "-X $(VERSION_INJECT)=$(shell sh scripts/get-version.sh)" github.com/arcanericky/totp/totp
+	GOOS=linux GOARCH=amd64 go build -o $@ -ldflags "-X $(VERSION_INJECT)=$(shell sh scripts/get-version.sh)" $(MAIN)
 
 $(DARWIN_AMD64): $(SRCS)
-	GOOS=darwin GOARCH=amd64 go build -o $@ -ldflags "-X $(VERSION_INJECT)=$(shell sh scripts/get-version.sh)" github.com/arcanericky/totp/totp
+	GOOS=darwin GOARCH=amd64 go build -o $@ -ldflags "-X $(VERSION_INJECT)=$(shell sh scripts/get-version.sh)" $(MAIN)
 
 $(LINUX_ARM32): $(SRCS)
-	GOOS=linux GOARCH=arm go build -o $@ -ldflags "-X $(VERSION_INJECT)=$(shell sh scripts/get-version.sh)" github.com/arcanericky/totp/totp
+	GOOS=linux GOARCH=arm go build -o $@ -ldflags "-X $(VERSION_INJECT)=$(shell sh scripts/get-version.sh)" $(MAIN)
 
 $(LINUX_ARM64): $(SRCS)
-	GOOS=linux GOARCH=arm64 go build -o $@ -ldflags "-X $(VERSION_INJECT)=$(shell sh scripts/get-version.sh)" github.com/arcanericky/totp/totp
+	GOOS=linux GOARCH=arm64 go build -o $@ -ldflags "-X $(VERSION_INJECT)=$(shell sh scripts/get-version.sh)" $(MAIN)
 
 clean:
 	rm -rf bin

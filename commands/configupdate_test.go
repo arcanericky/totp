@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"os"
@@ -11,6 +11,8 @@ func TestConfigUpdate(t *testing.T) {
 	collectionFile.filename = "testcollection.json"
 
 	createTestData(t)
+
+	configUpdateCmd := getConfigUpdateCmd(getRootCmd())
 
 	// Valid parameters
 	secretName := "testsecret"
@@ -26,7 +28,7 @@ func TestConfigUpdate(t *testing.T) {
 	}
 
 	// Test update secret
-	newSecret := "seedseed"
+	newSecret := "SEEDSEED"
 	configUpdateCmd.Run(nil, []string{secretName, newSecret})
 	c, err = totp.NewCollectionWithFile(collectionFile.filename)
 	if err != nil {
@@ -39,7 +41,7 @@ func TestConfigUpdate(t *testing.T) {
 	}
 
 	// Test using secret named 'config'
-	secretName = configCmd.Use
+	secretName = "config"
 	configUpdateCmd.Run(nil, []string{secretName, "seed"})
 	c, err = totp.NewCollectionWithFile(collectionFile.filename)
 	if err != nil {
@@ -48,7 +50,7 @@ func TestConfigUpdate(t *testing.T) {
 
 	secret, err = c.GetSecret(secretName)
 	if err == nil {
-		t.Error("Secret named \"" + configCmd.Use + "\" should not have been saved")
+		t.Error("Secret named \"" + secretName + "\" should not have been saved")
 	}
 
 	// No parameters passed

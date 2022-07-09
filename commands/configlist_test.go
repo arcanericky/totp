@@ -1,4 +1,4 @@
-package cmd
+package commands
 
 import (
 	"os"
@@ -10,9 +10,23 @@ func TestConfigList(t *testing.T) {
 
 	createTestData(t)
 
+	configListCmd := getConfigListCmd()
+
 	configListCmd.Run(configListCmd, []string{})
 
-	configListCmd.Flags().Set("names", "true")
+	// names only
+	_ = configListCmd.Flags().Set("names", "true")
+	configListCmd.Run(configListCmd, []string{})
+
+	// all
+	configListCmd = getConfigListCmd()
+	_ = configListCmd.Flags().Set("all", "true")
+	configListCmd.Run(configListCmd, []string{})
+
+	// names and all
+	configListCmd = getConfigListCmd()
+	_ = configListCmd.Flags().Set("all", "true")
+	_ = configListCmd.Flags().Set("names", "true")
 	configListCmd.Run(configListCmd, []string{})
 
 	configListCmd.ResetFlags()

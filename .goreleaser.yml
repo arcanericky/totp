@@ -4,10 +4,10 @@ before:
   hooks:
     - go mod tidy
 builds:
-  - main: ./totp
+  - main: ./cmd
     binary: totp
     ldflags:
-      - -s -w -X github.com/arcanericky/totp/cmd.versionText={{.Version}}
+      - -s -w -X github.com/arcanericky/totp/commands.versionText={{.Version}}
     env:
       - CGO_ENABLED=0
     goos:
