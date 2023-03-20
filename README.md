@@ -220,7 +220,7 @@ gpg --quiet --batch --passphrase mypassphrase --decrypt totp-collection.gpg | to
 
 ## Building
 
-`totp` is mostly developed using Go 1.18.x on Debian based systems. Only `go` is required but to use the automated actions the `Makefile` provides, `make` must be installed.
+`totp` is mostly developed using Go 1.19.x on Debian based systems. Only `go` is required but to use the automated actions the `Makefile` provides, `make` must be installed.
 
 To build everything:
 

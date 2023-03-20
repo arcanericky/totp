@@ -29,8 +29,6 @@ builds:
         goarch: arm64
       - goos: darwin
         goarch: 386
-      - goos: darwin
-        goarch: arm64
 archives:
   - name_template: "totp_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format_overrides:
