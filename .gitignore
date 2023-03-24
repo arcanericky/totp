@@ -6,3 +6,5 @@ coverage.*
 settings.json
 testcollection.json
 totp
+!cmd/totp/
+.idea/

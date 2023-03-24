@@ -4,7 +4,7 @@ before:
   hooks:
     - go mod tidy
 builds:
-  - main: ./cmd
+  - main: ./cmd/totp
     binary: totp
     ldflags:
       - -s -w -X github.com/arcanericky/totp/commands.versionText={{.Version}}

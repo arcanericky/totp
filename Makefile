@@ -1,6 +1,6 @@
 VERSION=1.0.0-incubation
 VERSION_INJECT=github.com/arcanericky/totp/cmd.versionText
-SRCS=*.go cmd/*.go commands/*.go
+SRCS=*.go cmd/**/*.go commands/*.go
 MAIN=./cmd/...
 EXECUTABLE=bin/totp
 
@@ -37,23 +37,11 @@ test:
 	go test -race -coverprofile=coverage.txt -covermode=atomic . ./commands
 	go tool cover -html=coverage.txt -o coverage.html
 
-$(WINDOWS_AMD64): $(SRCS)
-	GOOS=windows GOARCH=amd64 go build -o $@ -ldflags "-X $(VERSION_INJECT)=$(shell sh scripts/get-version.sh)" $(MAIN)
-
-$(LINUX_AMD64): $(SRCS)
-	GOOS=linux GOARCH=amd64 go build -o $@ -ldflags "-X $(VERSION_INJECT)=$(shell sh scripts/get-version.sh)" $(MAIN)
-
-$(DARWIN_AMD64): $(SRCS)
-	GOOS=darwin GOARCH=amd64 go build -o $@ -ldflags "-X $(VERSION_INJECT)=$(shell sh scripts/get-version.sh)" $(MAIN)
-
-$(DARWIN_ARM64): $(SRCS)
-	GOOS=darwin GOARCH=arm64 go build -o $@ -ldflags "-X $(VERSION_INJECT)=$(shell sh scripts/get-version.sh)" $(MAIN)
-
-$(LINUX_ARM32): $(SRCS)
-	GOOS=linux GOARCH=arm go build -o $@ -ldflags "-X $(VERSION_INJECT)=$(shell sh scripts/get-version.sh)" $(MAIN)
-
-$(LINUX_ARM64): $(SRCS)
-	GOOS=linux GOARCH=arm64 go build -o $@ -ldflags "-X $(VERSION_INJECT)=$(shell sh scripts/get-version.sh)" $(MAIN)
+$(LINUX_AMD64) $(DARWIN_AMD64) $(DARWIN_ARM64) $(LINUX_ARM32) $(LINUX_ARM64) $(WINDOWS_AMD64): $(SRCS)
+	$(eval GOOS := $(shell echo $@ | awk -F - '{print $$2}'))
+	$(eval GOARCH := $(shell echo $@ | awk -F - '{print $$3}' | sed 's/.exe//'))
+	$(eval LDFLAGS := "-X $(VERSION_INJECT)=$(shell sh scripts/get-version.sh)")
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go build -o $@ -ldflags $(LDFLAGS) $(MAIN)
 
 clean:
 	rm -rf bin
