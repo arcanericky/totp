@@ -10,6 +10,7 @@ import (
 	api "github.com/arcanericky/totp"
 	"github.com/pquerna/otp/totp"
 	"github.com/spf13/cobra"
+	"golang.design/x/clipboard"
 )
 
 const (
@@ -61,6 +62,14 @@ func getSecretNamesForCompletion(toComplete string) []string {
 	return secretNames
 }
 
+func copyToClipboard(code string) {
+	err := clipboard.Init()
+	if err != nil {
+		panic(err)
+	}
+	clipboard.Write(clipboard.FmtText, []byte(code))
+}
+
 func generateCode(writer io.Writer, name string, secret string, t time.Time) error {
 	const errGen = "Error generating code:"
 	if len(secret) != 0 {
@@ -71,7 +80,7 @@ func generateCode(writer io.Writer, name string, secret string, t time.Time) err
 		}
 
 		fmt.Fprintln(writer, code)
-
+		copyToClipboard(code)
 		return nil
 	}
 
@@ -88,6 +97,7 @@ func generateCode(writer io.Writer, name string, secret string, t time.Time) err
 	}
 
 	fmt.Fprintln(writer, code)
+	copyToClipboard(code)
 
 	return nil
 }
