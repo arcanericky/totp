@@ -12,21 +12,25 @@ func deleteSecret(name string) {
 	s, err := collectionFile.loader()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error loading settings:", err)
+		exitVal = 1
 		return
 	}
 
 	if _, err := s.DeleteSecret(name); err != nil {
 		fmt.Fprintln(os.Stderr, "Error deleting secret:", err)
+		exitVal = 1
 		return
 	}
 
 	if err := s.Save(); err != nil {
 		fmt.Fprintln(os.Stderr, "Error saving settings:", err)
+		exitVal = 1
 		return
 	}
 
 	if _, err := printResultf("Deleted secret %s\n", name); err != nil {
 		fmt.Fprintln(os.Stderr, err)
+		exitVal = 1
 		return
 	}
 }
@@ -43,6 +47,7 @@ func getConfigDeleteCmd() *cobra.Command {
 			Run: func(_ *cobra.Command, args []string) {
 				if len(args) != 1 {
 					fmt.Fprintln(os.Stderr, "Must provide a secret name to delete.")
+					exitVal = 1
 					return
 				}
 
@@ -53,6 +58,7 @@ func getConfigDeleteCmd() *cobra.Command {
 						fmt.Sprintf("This will delete secret %s.", secretName))
 					if err != nil {
 						fmt.Fprintln(os.Stderr, "Error getting response:", err)
+						exitVal = 1
 						return
 					}
 

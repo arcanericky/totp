@@ -37,7 +37,10 @@ type runVars struct {
 	qr         bool
 }
 
-var generateCodesService generateCodesAPI
+var (
+	generateCodesService generateCodesAPI
+	exitVal              int = 0
+)
 
 func getSecretNamesForCompletion(toComplete string) []string {
 	var (
@@ -150,9 +153,7 @@ func generateCodes(timeOffset time.Duration, durationToRun time.Duration, interv
 		})
 }
 
-func run(cmd *cobra.Command, args []string, cfg runVars) {
-	// var err error
-
+func run(cmd *cobra.Command, args []string, cfg runVars) int {
 	secretLen := len(cfg.secret)
 	argsLen := len(args)
 
@@ -175,7 +176,7 @@ func run(cmd *cobra.Command, args []string, cfg runVars) {
 			fmt.Fprintln(os.Stderr, err)
 		}
 
-		return
+		return 1
 	}
 
 	if cfg.qr {
@@ -184,8 +185,11 @@ func run(cmd *cobra.Command, args []string, cfg runVars) {
 			secretName = args[0]
 		}
 
-		_ = qrCode(os.Stdout, secretName, cfg.secret)
-		return
+		if err := qrCode(os.Stdout, secretName, cfg.secret); err != nil {
+			return 1
+		}
+
+		return 0
 	}
 
 	// Override if time was given
@@ -197,7 +201,7 @@ func run(cmd *cobra.Command, args []string, cfg runVars) {
 		codeTime, err = time.Parse(time.RFC3339, cfg.timeString)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Error parsing the time option:", err)
-			return
+			return 1
 		}
 	} else {
 		codeTime = time.Now()
@@ -213,12 +217,14 @@ func run(cmd *cobra.Command, args []string, cfg runVars) {
 	// If here then a stored shared secret is wanted
 	if err := generateCode(os.Stdout, secretName, cfg.secret, codeTime.Add(cfg.forward-cfg.backward)); err != nil {
 		// generateCode will output error text
-		return
+		return 1
 	}
 
 	if cfg.follow {
 		generateCodesService(time.Until(codeTime)-cfg.backward+cfg.forward, 0, 30*time.Second, time.Sleep, secretName, cfg.secret)
 	}
+
+	return 0
 }
 
 func validArgs(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -250,7 +256,7 @@ func getRootCmd() *cobra.Command {
 		},
 		ValidArgsFunction: validArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			run(cmd, args, cfg)
+			exitVal = run(cmd, args, cfg)
 		},
 	}
 
@@ -279,15 +285,13 @@ func getRootCmd() *cobra.Command {
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() int {
-	retVal := 0
-
 	defaults()
 	rootCmd := getRootCmd()
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
-		retVal = 1
+		exitVal = 1
 	}
 
-	return retVal
+	return exitVal
 }

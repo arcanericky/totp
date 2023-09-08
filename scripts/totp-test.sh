@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+# set -e
 
 TOTP=./totp-test
 COLLECTION=testcollection.json

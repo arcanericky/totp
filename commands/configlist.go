@@ -77,11 +77,11 @@ func listInfo(writer io.Writer, secrets []totp.Secret, all bool) {
 	}
 }
 
-func listSecrets(names, all bool) {
+func listSecrets(names, all bool) int {
 	c, err := collectionFile.loader()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error loading collection", err)
-		return
+		return 1
 	}
 
 	secrets := c.GetSecrets()
@@ -94,6 +94,8 @@ func listSecrets(names, all bool) {
 	} else {
 		listInfo(os.Stdout, secrets, all)
 	}
+
+	return 0
 }
 
 func getConfigListCmd() *cobra.Command {
@@ -108,9 +110,11 @@ func getConfigListCmd() *cobra.Command {
 			Run: func(listCmd *cobra.Command, _ []string) {
 				if names && all {
 					fmt.Fprintln(os.Stderr, "Only one of --names or --all can be used.")
+					exitVal = 1
 					return
 				}
-				listSecrets(names, all)
+
+				exitVal = listSecrets(names, all)
 			},
 		}
 	)

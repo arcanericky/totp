@@ -8,10 +8,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func updateSecret(name, value string) {
+func updateSecret(name, value string) int {
 	if isReservedCommand(name) {
 		fmt.Fprintln(os.Stderr, "The name \""+name+"\" is reserved for the "+name+" command")
-		return
+		return 1
 	}
 
 	// ignore error because file may not exist
@@ -20,12 +20,12 @@ func updateSecret(name, value string) {
 	secret, err := s.UpdateSecret(name, value)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error updating secret:", err)
-		return
+		return 1
 	}
 
 	if err := s.Save(); err != nil {
 		fmt.Fprintln(os.Stderr, "Error saving settings:", err)
-		return
+		return 1
 	}
 
 	action := "Updated"
@@ -35,8 +35,10 @@ func updateSecret(name, value string) {
 
 	if _, err := printResultf("%s secret %s\n", action, name); err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		return
+		return 1
 	}
+
+	return 0
 }
 
 func getConfigUpdateCmd(rootCmd *cobra.Command) *cobra.Command {
@@ -52,7 +54,7 @@ func getConfigUpdateCmd(rootCmd *cobra.Command) *cobra.Command {
 				return
 			}
 
-			updateSecret(args[0], args[1])
+			exitVal = updateSecret(args[0], args[1])
 		},
 	}
 
