@@ -30,6 +30,7 @@ func getConfigResetCmd() *cobra.Command {
 					confirm, err := userConfirm(bufio.NewReader(os.Stdin), "This will remove all secrets.")
 					if err != nil {
 						fmt.Fprintln(os.Stderr, "Error getting response:", err)
+						exitVal = 1
 						return
 					}
 
@@ -39,7 +40,9 @@ func getConfigResetCmd() *cobra.Command {
 					}
 				}
 
-				_ = configReset(collectionFile.filename)
+				if err := configReset(collectionFile.filename); err != nil {
+					exitVal = 1
+				}
 			},
 		}
 	)

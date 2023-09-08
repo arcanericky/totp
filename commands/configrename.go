@@ -8,27 +8,29 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func renameSecret(source, target string) {
+func renameSecret(source, target string) int {
 	if isReservedCommand(target) {
 		fmt.Fprintln(os.Stderr, "The name \""+target+"\" is reserved for the "+target+" command")
-		return
+		return 1
 	}
 
 	s, _ := collectionFile.loader()
 	if _, err := s.RenameSecret(source, target); err != nil {
 		fmt.Fprintln(os.Stderr, "Error renaming secret:", err)
-		return
+		return 1
 	}
 
 	if err := s.Save(); err != nil {
 		fmt.Fprintln(os.Stderr, "Error saving settings:", err)
-		return
+		return 1
 	}
 
 	if _, err := printResultf("Renamed secret %s to %s\n", source, target); err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		return
+		return 1
 	}
+
+	return 0
 }
 
 func getConfigRenameCmd(rootCmd *cobra.Command) *cobra.Command {
@@ -41,10 +43,11 @@ func getConfigRenameCmd(rootCmd *cobra.Command) *cobra.Command {
 		Run: func(_ *cobra.Command, args []string) {
 			if len(args) != 2 {
 				fmt.Fprintln(os.Stderr, "Must provide source and target.")
+				exitVal = 1
 				return
 			}
 
-			renameSecret(args[0], args[1])
+			exitVal = renameSecret(args[0], args[1])
 		},
 	}
 
